@@ -10,7 +10,7 @@
 #include "HexBinary.h"
 #include "Exceptions.h"
 
-using namespace james;
+using namespace schematicpp;
 
 HexBinary::HexBinary() : data(NULL), size(0) {}
 

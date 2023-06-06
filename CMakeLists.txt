@@ -13,24 +13,24 @@
 # limitations under the License.
 
 cmake_minimum_required(VERSION 2.6)
-project(james)
+project(schematicpp)
 
-add_subdirectory(libjames)
+add_subdirectory(libschematicpp)
 
-add_executable(james
+add_executable(schematicpp
     main.cpp
     Class.cpp
     BuiltInClasses.cpp
 )
 
-target_link_libraries(james libjames)
+target_link_libraries(schematicpp libschematicpp)
 
 # Account for the Xerces-C++ 3.1.x library being called xerces-c_3 on WIN32
 if(WIN32)
-    target_link_libraries(james xerces-c_3)
+    target_link_libraries(schematicpp xerces-c_3)
 else(WIN32)
-    target_link_libraries(james xerces-c)
+    target_link_libraries(schematicpp xerces-c)
 endif(WIN32)
 
-install(TARGETS james DESTINATION bin)
+install(TARGETS schematicpp DESTINATION bin)
 

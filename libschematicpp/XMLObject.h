@@ -16,7 +16,7 @@ XERCES_CPP_NAMESPACE_BEGIN
     class DOMElement;
 XERCES_CPP_NAMESPACE_END
 
-namespace james {
+namespace schematicpp {
     /**
      * XMLObject
      *
@@ -47,12 +47,12 @@ namespace james {
      *
      * throws: MissingRequiredElementException if one or more required complex elements is missing
      */
-    std::ostream& marshal(std::ostream& os, const james::XMLObject& obj, void (james::XMLObject::*appendChildren)(xercesc::DOMElement*) const, std::string name, std::string nameSpace);
+    std::ostream& marshal(std::ostream& os, const schematicpp::XMLObject& obj, void (schematicpp::XMLObject::*appendChildren)(xercesc::DOMElement*) const, std::string name, std::string nameSpace);
 
     /**
      * Internal utility function for unmarshalling XMLObjects.
      */
-    std::istream& unmarshal(std::istream& is, james::XMLObject& obj, void (james::XMLObject::*parseNode)(xercesc::DOMElement*), std::string name);
+    std::istream& unmarshal(std::istream& is, schematicpp::XMLObject& obj, void (schematicpp::XMLObject::*parseNode)(xercesc::DOMElement*), std::string name);
 }
 
 #endif /* _XMLOBJECT_H */

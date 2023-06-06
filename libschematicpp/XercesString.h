@@ -13,7 +13,7 @@
 #include <string>
 #include <ostream>
 
-namespace james {
+namespace schematicpp {
     /**
      * Wrapper class for dealing with XMLCh* strings.
      * Can convert from and to such strings.
@@ -31,7 +31,7 @@ namespace james {
     };
 }
 
-std::ostream& operator<< (std::ostream& os, const james::XercesString& str);
+std::ostream& operator<< (std::ostream& os, const schematicpp::XercesString& str);
 std::ostream& operator<< (std::ostream& os, const XMLCh* str);
 
 #endif /* _XERCESSTRING_H */

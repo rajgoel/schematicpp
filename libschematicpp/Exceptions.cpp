@@ -1,7 +1,7 @@
 // This file is in the public domain.
 #include "Exceptions.h"
 
-using namespace james;
+using namespace schematicpp;
 using namespace std;
 
 Exception::Exception(const std::string& msg) throw() : exception(), msg(msg) {}

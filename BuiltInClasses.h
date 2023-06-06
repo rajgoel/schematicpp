@@ -139,7 +139,7 @@ GENERATE_BUILTIN_NONCONST(BooleanClass, "boolean", "bool")
     }
 };
 
-GENERATE_BUILTIN(HexBinaryClass, "hexBinary", "james::HexBinary") HEADERLESS};
+GENERATE_BUILTIN(HexBinaryClass, "hexBinary", "schematicpp::HexBinary") HEADERLESS};
 
 //aliases
 GENERATE_BUILTIN_ALIAS(IntegerClass, IntClass, "integer")};

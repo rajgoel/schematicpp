@@ -31,7 +31,7 @@ extern bool generateRequiredCtor;
 extern bool generateRequiredAndVectorsCtor;
 extern bool generateAllCtor;
 
-const string variablePostfix = "_james";
+const string variablePostfix = "_schematicpp";
 
 const string nodeWithPostfix = "node" + variablePostfix;
 const string tempWithPostfix = "temp" + variablePostfix;
@@ -323,7 +323,7 @@ void Class::writeImplementation(ostream& os) const {
     os << "#include <xercesc/dom/DOMDocument.hpp>" << endl;
     os << "#include <xercesc/dom/DOMElement.hpp>" << endl;
     os << "#include <xercesc/dom/DOMAttr.hpp>" << endl;
-    os << "#include <libjames/XercesString.h>" << endl;
+    os << "#include <libschematicpp/XercesString.h>" << endl;
     os << "#include \"" << className << ".h\"" << endl;
 
     //no implementation needed for simple types
@@ -333,7 +333,7 @@ void Class::writeImplementation(ostream& os) const {
     os << endl;
     os << "using namespace std;" << endl;
     os << "using namespace xercesc;" << endl;
-    os << "using namespace james;" << endl;
+    os << "using namespace schematicpp;" << endl;
     os << endl;
 
     if (needsProtectedDefaultConstructor()) {
@@ -397,11 +397,11 @@ void Class::writeImplementation(ostream& os) const {
     os << "}" << endl << endl;
 
     os << "std::ostream& operator<< (std::ostream& os, const " << className << "& obj) {" << endl;
-    os << "\treturn james::marshal(os, obj, static_cast<void (james::XMLObject::*)(xercesc::DOMElement*) const>(&" << className << "::appendChildren), obj.getName(), obj.getNamespace());" << endl;
+    os << "\treturn schematicpp::marshal(os, obj, static_cast<void (schematicpp::XMLObject::*)(xercesc::DOMElement*) const>(&" << className << "::appendChildren), obj.getName(), obj.getNamespace());" << endl;
     os << "}" << endl << endl;
 
     os << "std::istream& operator>> (std::istream& is, " << className << "& obj) {" << endl;
-    os << "\treturn james::unmarshal(is, obj, static_cast<void (james::XMLObject::*)(xercesc::DOMElement*)>(&" << className << "::parseNode), obj.getName());" << endl;
+    os << "\treturn schematicpp::unmarshal(is, obj, static_cast<void (schematicpp::XMLObject::*)(xercesc::DOMElement*)>(&" << className << "::parseNode), obj.getName());" << endl;
     os << "}" << endl << endl;
 }
 
@@ -441,8 +441,8 @@ void Class::writeHeader(ostream& os) const {
 
     os << "#include <xercesc/util/XercesDefs.hpp>" << endl;
     os << "XERCES_CPP_NAMESPACE_BEGIN class DOMElement; XERCES_CPP_NAMESPACE_END" << endl;
-    os << "#include <libjames/HexBinary.h>" << endl;
-    os << "#include <libjames/optional.h>" << endl;
+    os << "#include <libschematicpp/HexBinary.h>" << endl;
+    os << "#include <libschematicpp/optional.h>" << endl;
     os << "// Fix issue with identifiers named 'major' or 'minor'" << endl;
     os << "// See https://bugzilla.redhat.com/show_bug.cgi?id=130601" << endl;
     os << "#undef major" << endl;
@@ -456,10 +456,10 @@ void Class::writeHeader(ostream& os) const {
             os << "#include " << getBaseHeader() << endl;
         
         if(!base || base->isSimple())
-            os << "#include <libjames/XMLObject.h>" << endl;
+            os << "#include <libschematicpp/XMLObject.h>" << endl;
 
         if(isDocument)
-            os << "#include <libjames/XMLDocument.h>" << endl;
+            os << "#include <libschematicpp/XMLDocument.h>" << endl;
 
         //include member classes that we can't prototype
         set<string> classesToInclude = getIncludedClasses();
@@ -479,11 +479,11 @@ void Class::writeHeader(ostream& os) const {
             os << endl;
 
         if(isDocument)
-            os << "class " << className << " : public " << base->getClassname() << ", public james::XMLDocument";
+            os << "class " << className << " : public " << base->getClassname() << ", public schematicpp::XMLDocument";
         else if(base && !base->isSimple())
             os << "class " << className << " : public " << base->getClassname();
         else
-            os << "class " << className << " : public james::XMLObject";
+            os << "class " << className << " : public schematicpp::XMLObject";
         
         os << " {" << endl;
 
@@ -547,7 +547,7 @@ void Class::writeHeader(ostream& os) const {
                 os << "//";
 
             if(it->isOptional())
-                os << "james::optional<";
+                os << "schematicpp::optional<";
             else if(it->isArray())
                 os << "std::vector<";
 

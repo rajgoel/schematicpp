@@ -11,7 +11,7 @@
 
 using namespace xercesc;
 using namespace std;
-using namespace james;
+using namespace schematicpp;
 
 XercesString::XercesString(const string& str) {
     XMLCh *xstr = XMLString::transcode(str.c_str());

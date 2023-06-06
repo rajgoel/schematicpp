@@ -9,7 +9,7 @@
 #ifndef _XMLDOCUMENT_H
 #define _XMLDOCUMENT_H
 
-namespace james {
+namespace schematicpp {
     /**
      * XMLDocument
      *

@@ -13,15 +13,15 @@
 
 #ifdef __GNUC__
 #if (__GNUC__ > 3 || __GNUC__ == 3 && __GNUC_MINOR__ >= 1)
-#define james_attribute_deprecated __attribute__((deprecated))
+#define schematicpp_attribute_deprecated __attribute__((deprecated))
 #else
-#define james_attribute_deprecated
+#define schematicpp_attribute_deprecated
 #endif
 #else
-#define james_attribute_deprecated
+#define schematicpp_attribute_deprecated
 #endif
 
-namespace james {
+namespace schematicpp {
     /**
      * Like boost::optional, except with pointer storage.
      *
@@ -109,7 +109,7 @@ namespace james {
         }
 
         /**
-         * Like james::optional::get() except it takes a default value that is
+         * Like schematicpp::optional::get() except it takes a default value that is
          * returned if !isSet().
          * This is useful for avoiding overly long lines like:
          * 

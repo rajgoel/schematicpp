@@ -4,7 +4,7 @@
 
 #include <string>
 
-namespace james {
+namespace schematicpp {
     /**
      * Base class for all exceptions thrown during marshalling and unmarshalling.
      */
@@ -29,7 +29,7 @@ namespace james {
         OutOfMemoryException(const std::string& msg) throw();
     };
 
-    //thrown when the user attempts to access the value of an unset james::optional
+    //thrown when the user attempts to access the value of an unset schematicpp::optional
     class UnsetOptionalException : public Exception {
     public:
         UnsetOptionalException(const std::string& msg) throw();

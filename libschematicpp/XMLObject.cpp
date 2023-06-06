@@ -28,7 +28,7 @@
 #include <xercesc/framework/XMLFormatter.hpp>
 
 using namespace xercesc;
-using namespace james;
+using namespace schematicpp;
 using namespace std;
 
 /**
@@ -124,7 +124,7 @@ public:
     }
 };
 
-ostream& james::marshal(ostream& os, const XMLObject& obj, void (XMLObject::*appendChildren)(xercesc::DOMElement*) const, string documentName, string nameSpace) {
+ostream& schematicpp::marshal(ostream& os, const XMLObject& obj, void (XMLObject::*appendChildren)(xercesc::DOMElement*) const, string documentName, string nameSpace) {
     XercesString ls("LS"), xmlns("xmlns");
     DOMImplementation       *implementation = DOMImplementationRegistry::getDOMImplementation(ls);
     DOMImplementationLS     *lsImplementation = dynamic_cast<DOMImplementationLS*>(implementation);
@@ -177,7 +177,7 @@ ostream& james::marshal(ostream& os, const XMLObject& obj, void (XMLObject::*app
     return os;
 }
 
-istream& james::unmarshal(istream& is, XMLObject& obj, void (XMLObject::*parseNode)(xercesc::DOMElement*), string name) {
+istream& schematicpp::unmarshal(istream& is, XMLObject& obj, void (XMLObject::*parseNode)(xercesc::DOMElement*), string name) {
     //parse XML, then parse objects from the resulting DOM tree
     XercesDOMParser parser;
 

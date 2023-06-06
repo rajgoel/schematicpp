@@ -1,4 +1,10 @@
-/* Copyright 2011 Tomas Härdin
+/*
+ * File:   main.cpp
+ * Authors: Asvin Goel (rajgoel), Tomas Härdin (tjoppen)
+ *
+ * Forked from: https://github.com/Tjoppen/james (June 6, 2023)
+ *
+ * LICENSE:
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,11 +17,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
- * File:   main.cpp
- * Author: tjoppen
- *
- * Created on February 12, 2010, 3:53 PM
  */
 
 #include <iostream>
@@ -39,17 +40,18 @@
 #endif
 
 #include "main.h"
-#include "libjames/XercesString.h"
+#include "libschematicpp/XercesString.h"
 #include "Class.h"
 #include "BuiltInClasses.h"
 
 using namespace std;
 using namespace xercesc;
-using namespace james;
+using namespace schematicpp;
 
 static void printUsage() {
-    cerr << "USAGE: james [-v] [-d] [-nr] [-nv] [-a] [-cmake targetname] [--dry-run] output-dir list-of-XSL-documents" << endl;
+    cerr << "USAGE: schematicpp [-v] [-d] [-nr] [-nv] [-a] [-cmake targetname] [--dry-run] output-dir list-of-XSL-documents" << endl;
     cerr << " -v\tVerbose mode" << endl;
+    cerr << " -s\tStrict mode - throw errors when expected child element is missing" << endl;
     cerr << " -d\tGenerate default constructors" << endl;
     cerr << " -nr\tDon't generate constructors taking required elements" << endl;
     cerr << " -nv\tDon't generate constructors taking required elements and vectors" << endl;
@@ -71,6 +73,7 @@ map<FullName, Class*> classes;
 map<FullName, Class*> groups;
 
 bool verbose = false;
+bool strict = false;
 bool generateDefaultCtor = false;
 bool generateRequiredCtor = true;
 bool generateRequiredAndVectorsCtor = true;
@@ -235,8 +238,10 @@ static DOMElement *getExpectedChildElement(DOMNode *parent, string childName) {
             return childElement;
         }
     }
-
-    throw runtime_error((string)XercesString(parent->getLocalName()) + " missing expected child element " + childName);
+    if (strict)
+        throw runtime_error("'" + (string)XercesString(parent->getLocalName()) + "' missing expected child element '" + childName + "'");
+    cerr << "'" + (string)XercesString(parent->getLocalName()) + "' missing expected child element '" + childName + "'" << endl;
+    return NULL;
 }
 
 static vector<DOMElement*> getChildElements(DOMElement *parent) {
@@ -343,7 +348,9 @@ static void parseSequence(DOMElement *parent, DOMElement *sequence, Class *cl, b
             FullName subName(cl->name.first, cl->name.second + "_" + (string)name);
 
             //expect <complexType> sub-tag
-            parseComplexType(getExpectedChildElement(child, "complexType"), subName);
+            DOMElement *expectedChild = getExpectedChildElement(child, "complexType");
+            if (!strict && expectedChild == NULL) continue;
+            parseComplexType(expectedChild, subName);
 
             Class::Member info;
             info.name = name;
@@ -395,7 +402,7 @@ static void parseComplexType(DOMElement *element, FullName fullName, Class *cl) 
             parseSequence(element, child, cl, true);
         } else if(name == "complexContent" || name == "simpleContent") {
             DOMElement *extension = getExpectedChildElement(child, "extension");
-            
+            if (!strict && extension == NULL) continue;
             if(!extension->hasAttribute(XercesString("base")))
                 throw runtime_error("Extension missing expected attribute base");
             
@@ -436,6 +443,9 @@ static void parseComplexType(DOMElement *element, FullName fullName, Class *cl) 
 
             //add group ref
             cl->groups.push_back(toFullName(XercesString(child->getAttribute(XercesString("ref")))));
+        } else if(name == "anyAttribute") {
+            cerr << "Found anyAttribute for " << (string)fullName.second << endl;
+            // TODO 
         } else {
             throw runtime_error("Unknown complexType child of type " + (string)name);
         }
@@ -447,7 +457,7 @@ static void parseSimpleType(DOMElement *element, FullName fullName) {
     CHECK(element);
 
     DOMElement *restriction = getExpectedChildElement(element, "restriction");
-
+    if (!strict && restriction == NULL) return;
     if(!restriction->hasAttribute(XercesString("base")))
         throw runtime_error("simpleType restriction lacks expected attribute 'base'");
 
@@ -487,8 +497,9 @@ static void parseElement(DOMElement *element, string tns) {
         if(!element->hasAttribute(XercesString("type"))) {
             //anonymous element type. derive it using expected <complexType>
             type = FullName(tns, fullName.second + "Type");
-
-            parseComplexType(getExpectedChildElement(element, "complexType"), type);
+            DOMElement *expectedChild = getExpectedChildElement(element, "complexType");
+            if (!strict && expectedChild == NULL) return;
+            parseComplexType(expectedChild, type);
         } else
             type = toFullName(XercesString(element->getAttribute(XercesString("type"))), tns);
 
@@ -518,13 +529,15 @@ static void resolveMemberRefs(map<FullName, Class*>& classMap) {
     for(map<FullName, Class*>::iterator it = classMap.begin(); it != classMap.end(); it++) {
         for(list<Class::Member>::iterator it2 = it->second->members.begin(); it2 != it->second->members.end(); it2++) {
             if(classes.find(it2->type) == classes.end()) {
-                if (it2->minOccurs > 0)
-                    throw runtime_error("Undefined type " + it2->type.first + ":" + it2->type.second + " in required member " + it2->name + " of " + it->first.first + ":" + it->first.second);
-
+                if (it2->minOccurs > 0) {
+                    if (strict)
+                        throw runtime_error("Undefined type '" + it2->type.first + ":" + it2->type.second + "' in required member '" + it2->name + "' of '" + it->first.first + ":" + it->first.second + "'");
+                    cerr << "Undefined type '" + it2->type.first + ":" + it2->type.second + "' in required member '" + it2->name + "' of '" + it->first.first + ":" + it->first.second + "'" << endl;
+                }
                 //allow members with undefined types as long as they're optional or vectors
                 if (verbose)
-                    cerr << "Optional/vector member " << it2->name << " of " << it->first.first << ":" << it->first.second <<
-                            " is of unknown type " << it2->type.first << ":" << it2->type.second << endl << " - ignoring" << endl;
+                    cerr << "Optional/vector member '" << it2->name << "' of '" << it->first.first << ":" << it->first.second <<
+                            "' is of unknown type '" << it2->type.first << ":" << it2->type.second << endl << "' - ignoring" << endl;
 
                 it2->cl = NULL;
             } else
@@ -544,7 +557,7 @@ static void work(string outputDir, const vector<string>& schemaNames) {
         DOMDocument *document = parser.getDocument();
 
         if(!document)
-            throw runtime_error("Failed to parse " + name + " - file does not exist?");
+            throw runtime_error("Failed to parse '" + name + "' - file does not exist?");
 
         DOMElement *root = document->getDocumentElement();
 
@@ -574,8 +587,11 @@ static void work(string outputDir, const vector<string>& schemaNames) {
 
     for(map<FullName, Class*>::iterator it = classes.begin(); it != classes.end(); it++) {
         if(it->second->hasBase()) {
+            // assume same namespace if missing
+            if (it->second->baseType.first == "") it->second->baseType.first = it->second->name.first;
+
             if(classes.find(it->second->baseType) == classes.end())
-                throw runtime_error("Undefined base type " + it->second->baseType.first + ":" + it->second->baseType.second + " of " + it->second->name.first + ":" + it->second->name.second);
+                throw runtime_error("Undefined base type '" + it->second->baseType.first + ":" + it->second->baseType.second + "' of '" + it->second->name.first + ":" + it->second->name.second + "'");
 
             it->second->base = classes[it->second->baseType];
         } else if(it->second->isDocument)
@@ -584,7 +600,7 @@ static void work(string outputDir, const vector<string>& schemaNames) {
         //insert members of any referenced groups as members in this class
         for(list<FullName>::iterator it2 = it->second->groups.begin(); it2 != it->second->groups.end(); it2++) {
             if(groups.find(*it2) == groups.end())
-                throw runtime_error("Undefined group " + it2->first + ":" + it2->second + " in " + it->second->name.first + ":" + it->second->name.second);
+                throw runtime_error("Undefined group '" + it2->first + ":" + it2->second + "' in '" + it->second->name.first + ":" + it->second->name.second + "'");
 
             //add each member in the group to the current class
             for(list<Class::Member>::iterator it3 = groups[*it2]->members.begin(); it3 != groups[*it2]->members.end(); it3++)
@@ -688,6 +704,11 @@ int main_wrapper(int argc, char** argv) {
             if(!strcmp(argv[1], "-v")) {
                 verbose = true;
                 cerr << "Verbose mode" << endl;
+
+                continue;
+            } else if(!strcmp(argv[1], "-s")) {
+                strict = true;
+                if(verbose) cerr << "Strict mode" << endl;
 
                 continue;
             } else if(!strcmp(argv[1], "-d")) {

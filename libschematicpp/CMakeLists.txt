@@ -1,13 +1,13 @@
 # This file is in the public domain.
-add_library(libjames
+add_library(libschematicpp
     Exceptions.cpp
     HexBinary.cpp
     XercesString.cpp
     XMLObject.cpp
 )
 
-set_target_properties(libjames PROPERTIES OUTPUT_NAME james)
-install(TARGETS libjames DESTINATION lib)
+set_target_properties(libschematicpp PROPERTIES OUTPUT_NAME schematicpp)
+install(TARGETS libschematicpp DESTINATION lib)
 
 install(FILES
     Exceptions.h
@@ -17,6 +17,6 @@ install(FILES
     XMLDocument.h
     XMLObject.h
     optional.h
-    DESTINATION include/libjames
+    DESTINATION include/libschematicpp
 )
 
