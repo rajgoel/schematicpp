@@ -66,6 +66,9 @@ static void printUsage() {
 //maps namespace abbreviation to their full URIs
 map<string, string> nsLUT;
 
+//collection of referable types
+map<XercesString, FullName> types;
+
 //collection of all generated classes
 map<FullName, Class*> classes;
 
@@ -311,6 +314,7 @@ static void parseSequence(DOMElement *parent, DOMElement *sequence, Class *cl, b
         int maxOccurs = 1;
 
         XercesString typeStr("type");
+        XercesString refStr("ref");
         XercesString minOccursStr("minOccurs");
         XercesString maxOccursStr("maxOccurs");
         string name = fixIdentifier(XercesString(child->getAttribute(XercesString("name"))));
@@ -353,6 +357,14 @@ static void parseSequence(DOMElement *parent, DOMElement *sequence, Class *cl, b
             info.maxOccurs = maxOccurs;
             info.isAttribute = false;
 
+            cl->addMember(info);
+        } else if(child->hasAttribute(refStr)) {
+            Class::Member info;
+            info.name = XercesString(child->getAttribute(refStr));
+            info.type = types[XercesString(child->getAttribute(refStr))];
+            info.minOccurs = minOccurs;
+            info.maxOccurs = maxOccurs;
+            info.isAttribute = false;
             cl->addMember(info);
         } else {
             //no type - anonymous subtype
@@ -598,6 +610,14 @@ static void work(string outputDir, const vector<string>& schemaNames) {
         if (verbose) cerr << "Target namespace: " << tns << endl;
 
         vector<DOMElement*> elements = getChildElements(root);
+
+        for(size_t x = 0; x < elements.size(); x++) {
+            XercesString nodeName(elements[x]->getLocalName());
+            XercesString name(elements[x]->getAttribute(XercesString("name")));
+            if(nodeName == "element" && elements[x]->hasAttribute(XercesString("type"))) {
+                types[name] = toFullName(XercesString(elements[x]->getAttribute(XercesString("type"))), tns);
+            }
+        }
 
         for (size_t x = 0; x < elements.size(); x++) {
             parseElement(elements[x], tns);
