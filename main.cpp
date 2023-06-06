@@ -483,20 +483,22 @@ static void parseComplexType(DOMElement *element, FullName fullName, Class *cl) 
 }
 
 static void parseSimpleType(DOMElement *element, FullName fullName) {
-    //expect a <restriction> child element
     CHECK(element);
+    FullName type = { XSL, "string" };
 
-    DOMElement *restriction = getExpectedChildElement(element, "restriction");
-    if (!strict && restriction == NULL) return;
-    if (!restriction->hasAttribute(XercesString("base"))) {
-        throw runtime_error("simpleType restriction lacks expected attribute 'base'");
+    vector<DOMElement*> restriction = getChildElementsByTagName(element, "restriction");
+    if ( restriction.size() ) {
+        //use base type of <restriction>
+        if (!restriction[0]->hasAttribute(XercesString("base"))) {
+            throw runtime_error("simpleType restriction lacks expected attribute 'base'");
+        }
+
+        //convert xs:string and the like to their respective FullName
+        type = toFullName(XercesString(restriction[0]->getAttribute(XercesString("base"))));
     }
 
-    //convert xs:string and the like to their respective FullName
-    FullName baseName = toFullName(XercesString(restriction->getAttribute(XercesString("base"))));
-
     //add class and return
-    addClass(new Class(fullName, Class::SIMPLE_TYPE, baseName));
+    addClass(new Class(fullName, Class::SIMPLE_TYPE, type));
 }
 
 static void parseElement(DOMElement *element, string tns) {
