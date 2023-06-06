@@ -678,7 +678,9 @@ std::list<Class::Member> Class::getElements(bool includeBase, bool vectors, bool
     }
 
     for (std::list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
-        if (it->isRequired() || (it->isArray() && vectors) || (it->isOptional() && optionals)) {
+        if ( it->cl &&
+             (it->isRequired() || (it->isArray() && vectors) || (it->isOptional() && optionals))
+        ) {
             ret.push_back(*it);
         }
     }
