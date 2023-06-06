@@ -64,54 +64,61 @@ bool Class::hasBase() const {
 
 void Class::addConstructor(const Constructor& constructor) {
     //first make sure an identical constructor doesn't already exist
-    for(list<Constructor>::const_iterator it = constructors.begin(); it != constructors.end(); it++)
-        if(it->hasSameSignature(constructor))
+    for (list<Constructor>::const_iterator it = constructors.begin(); it != constructors.end(); it++) {
+        if (it->hasSameSignature(constructor)) {
             return;
+        }
+    }
 
     constructors.push_back(constructor);
 }
 
 void Class::doPostResolveInit() {
     //figure out which constructors we need
-    if(generateDefaultCtor)             addConstructor(Constructor(this));
-    if(generateRequiredCtor)            addConstructor(Constructor(this, false, false));
-    if(generateRequiredAndVectorsCtor)  addConstructor(Constructor(this, true,  false));
-    if(generateAllCtor)                 addConstructor(Constructor(this, true,  true));
+    if (generateDefaultCtor)             addConstructor(Constructor(this));
+    if (generateRequiredCtor)            addConstructor(Constructor(this, false, false));
+    if (generateRequiredAndVectorsCtor)  addConstructor(Constructor(this, true,  false));
+    if (generateAllCtor)                 addConstructor(Constructor(this, true,  true));
 
-    if(constructors.size() == 0)
+    if (constructors.size() == 0) { 
         throw runtime_error("No constructors in class " + getClassname());
+    } 
 
     //make sure members classes add us as their friend
-    for(std::list<Member>::iterator it = members.begin(); it != members.end(); it++) {
+    for (std::list<Member>::iterator it = members.begin(); it != members.end(); it++) {
         //there's no need to befriend ourselves
-        if(it->cl && it->cl != this)
+        if (it->cl && it->cl != this) {
             it->cl->friends.insert(getClassname());
+        }
     }
 }
 
 std::list<Class::Member>::iterator Class::findMember(std::string name) {
-    for(std::list<Member>::iterator it = members.begin(); it != members.end(); it++)
-        if(it->name == name)
+    for (std::list<Member>::iterator it = members.begin(); it != members.end(); it++) {
+        if (it->name == name) {
             return it;
+        }
+    }
 
     return members.end();
 }
 
 void Class::addMember(Member memberInfo) {
-    if(findMember(memberInfo.name) != members.end())
+    if (findMember(memberInfo.name) != members.end()) {
         throw runtime_error("Member " + memberInfo.name + " defined more than once in " + this->name.second);
-
-    if(verbose) cerr << this->name.second << " got " << memberInfo.type.first << ":" << memberInfo.type.second << " " << memberInfo.name << ". Occurance: ";
-
-    if(memberInfo.maxOccurs == UNBOUNDED) {
-        if(verbose) cerr << "at least " << memberInfo.minOccurs;
-    } else if(memberInfo.minOccurs == memberInfo.maxOccurs) {
-        if(verbose) cerr << "exactly " << memberInfo.minOccurs;
-    } else {
-        if(verbose) cerr << "between " << memberInfo.minOccurs << "-" << memberInfo.maxOccurs;
     }
 
-    if(verbose) cerr << endl;
+    if (verbose) cerr << this->name.second << " got " << memberInfo.type.first << ":" << memberInfo.type.second << " " << memberInfo.name << ". Occurance: ";
+
+    if (memberInfo.maxOccurs == UNBOUNDED) {
+        if (verbose) cerr << "at least " << memberInfo.minOccurs;
+    } else if (memberInfo.minOccurs == memberInfo.maxOccurs) {
+        if (verbose) cerr << "exactly " << memberInfo.minOccurs;
+    } else {
+        if (verbose) cerr << "between " << memberInfo.minOccurs << "-" << memberInfo.maxOccurs;
+    }
+
+    if (verbose) cerr << endl;
 
     members.push_back(memberInfo);
 }
@@ -122,8 +129,8 @@ void Class::addMember(Member memberInfo) {
 string Class::generateAppender() const {
     ostringstream oss;
 
-    if(base) {
-        if(base->isSimple()) {
+    if (base) {
+        if (base->isSimple()) {
             //simpleContent
             oss << base->generateElementSetter("content", nodeWithPostfix, "\t") << endl;
         } else {
@@ -132,30 +139,31 @@ string Class::generateAppender() const {
         }
     }
     
-    for(std::list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
-        if (!it->cl)
+    for (std::list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
+        if (!it->cl) {
             continue;
-
+        }
         string name = it->name;
         string setterName = it->name;
         string nodeName = name + "Node";
 
-        if(it != members.begin())
+        if (it != members.begin()) {
             oss << endl;
+        }
 
-        if(it->isArray()) {
+        if (it->isArray()) {
             string itName = "it" + variablePostfix;
             setterName = "(*" + itName + ")";
-            oss << "\tfor(std::vector<" << it->cl->getClassname() << ">::const_iterator " << itName << " = " << name << ".begin(); " << itName << " != " << name << ".end(); " << itName << "++)" << endl;
-        } else if(it->isOptional()) {
+            oss << "\tfor (std::vector<" << it->cl->getClassname() << ">::const_iterator " << itName << " = " << name << ".begin(); " << itName << " != " << name << ".end(); " << itName << "++)" << endl;
+        } else if (it->isOptional()) {
             //insert a non-null check
             setterName += ".get()";
-            oss << "\tif(" << name << ".isSet())" << endl;
+            oss << "\tif (" << name << ".isSet())" << endl;
         }
 
         oss << "\t{" << endl;
 
-        if(it->isAttribute) {
+        if (it->isAttribute) {
             //attribute
             oss << "\t\tXercesString " << tempWithPostfix << "(\"" << name << "\");" << endl;
             oss << "\t\tDOMAttr *" << nodeName << " = " << nodeWithPostfix << "->getOwnerDocument()->createAttribute(" << tempWithPostfix << ");" << endl;
@@ -176,15 +184,17 @@ string Class::generateAppender() const {
 }
 
 string Class::generateElementSetter(string memberName, string nodeName, string tabs) const {
-    if(isSimple() && base)
+    if (isSimple() && base) {
         return base->generateElementSetter(memberName, nodeName, tabs);
+    }
 
     return tabs + memberName + ".appendChildren(" + nodeName + ");";
 }
 
 string Class::generateAttributeSetter(string memberName, string attributeName, string tabs) const {
-    if(isSimple() && base)
+    if (isSimple() && base) {
         return base->generateAttributeSetter(memberName, attributeName, tabs);
+    }
 
     throw runtime_error("Tried to generateAttributeSetter() for a non-simple Class");
 }
@@ -194,8 +204,8 @@ string Class::generateParser() const {
     string childName = "child" + variablePostfix;
     string nameName = "name" + variablePostfix;
 
-    if(base) {
-        if(base->isSimple()) {
+    if (base) {
+        if (base->isSimple()) {
             //simpleContent
             oss << base->generateMemberSetter("content", nodeWithPostfix, "\t") << endl;
         } else {
@@ -205,8 +215,8 @@ string Class::generateParser() const {
         oss << endl;
     }
 
-    oss << "\tfor(DOMNode *" << childName << " = " << nodeWithPostfix << "->getFirstChild(); " << childName << "; " << childName << " = " << childName << "->getNextSibling()) {" << endl;
-    oss << "\t\tif(!" << childName << "->getLocalName())" << endl;
+    oss << "\tfor (DOMNode *" << childName << " = " << nodeWithPostfix << "->getFirstChild(); " << childName << "; " << childName << " = " << childName << "->getNextSibling()) {" << endl;
+    oss << "\t\tif (!" << childName << "->getLocalName())" << endl;
     oss << "\t\t\tcontinue;" << endl;
     oss << endl;
     oss << "\t\tXercesString " << nameName << "(" << childName << "->getLocalName());" << endl;
@@ -216,20 +226,23 @@ string Class::generateParser() const {
     //in other words, lookin up parsing function pointers in a map should be faster then all these string comparisons
     bool first = true;
 
-    for(std::list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
-        if (!it->cl)
+    for (std::list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
+        if (!it->cl) {
             continue;
+        }
 
-        if(!it->isAttribute) {
-            if(first)
+        if (!it->isAttribute) {
+            if (first) {
                 first = false;
-            else
+            }
+            else {
                 oss << endl;
+            }
 
-            oss << "\t\tif(" << nameName << " == \"" << it->name << "\" && " << childName << "->getNodeType() == DOMNode::ELEMENT_NODE) {" << endl;
+            oss << "\t\tif (" << nameName << " == \"" << it->name << "\" && " << childName << "->getNodeType() == DOMNode::ELEMENT_NODE) {" << endl;
 
             string memberName = it->name;
-            if(!it->isRequired()) {
+            if (!it->isRequired()) {
                 memberName += tempWithPostfix;
                 oss << "\t\t\t" << it->cl->getClassname() << " " << memberName << ";" << endl;
             }
@@ -238,9 +251,9 @@ string Class::generateParser() const {
             oss << "\t\t\tDOMElement *" << childElementName << " = dynamic_cast<DOMElement*>(" << childName << ");" << endl;
             oss << it->cl->generateMemberSetter(memberName, childElementName, "\t\t\t");
 
-            if(it->isArray()) {
+            if (it->isArray()) {
                 oss << "\t\t\t" << it->name << ".push_back(" << memberName << ");" << endl;
-            } else if(it->isOptional()) {
+            } else if (it->isOptional()) {
                 oss << "\t\t\t" << it->name << " = " << memberName << ";" << endl;
             }
 
@@ -251,21 +264,22 @@ string Class::generateParser() const {
     oss << "\t}" << endl;
 
     //attributes
-    for(std::list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
-        if (!it->cl)
+    for (std::list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
+        if (!it->cl) {
             continue;
+        }
 
-        if(it->isAttribute) {
+        if (it->isAttribute) {
             string attributeNodeName = "attributeNode" + variablePostfix;
 
             oss << "\t{" << endl;
             oss << "\t\tXercesString " << tempWithPostfix << "(\"" << it->name << "\");" << endl;
-            oss << "\t\tif(" << nodeWithPostfix << "->hasAttribute(" << tempWithPostfix << ")) {" << endl;
+            oss << "\t\tif (" << nodeWithPostfix << "->hasAttribute(" << tempWithPostfix << ")) {" << endl;
             oss << "\t\t\tDOMAttr *" << attributeNodeName << " = " << nodeWithPostfix << "->getAttributeNode(" << tempWithPostfix << ");" << endl;
 
             string attributeName = it->name;
 
-            if(it->isOptional()) {
+            if (it->isOptional()) {
                 attributeName += "Temp";
                 oss << "\t\t\t" << it->cl->getClassname() << " " << attributeName << ";" << endl;
             }
@@ -273,7 +287,7 @@ string Class::generateParser() const {
 
             oss << it->cl->generateAttributeParser(attributeName, attributeNodeName, "\t\t\t") << endl;
 
-            if(it->isOptional()) {
+            if (it->isOptional()) {
                 oss << "\t\t\t" << it->name << " = " << attributeName << ";" << endl;
             }
 
@@ -285,8 +299,9 @@ string Class::generateParser() const {
 }
 
 string Class::generateMemberSetter(string memberName, string nodeName, string tabs) const {
-    if(isSimple() && base)
+    if (isSimple() && base) {
         return base->generateMemberSetter(memberName, nodeName, tabs);
+    }
 
     ostringstream oss;
 
@@ -296,8 +311,9 @@ string Class::generateMemberSetter(string memberName, string nodeName, string ta
 }
 
 string Class::generateAttributeParser(string memberName, string attributeName, string tabs) const {
-    if(isSimple() && base)
+    if (isSimple() && base) {
         return base->generateAttributeParser(memberName, attributeName, tabs);
+    }
 
     throw runtime_error("Tried to generateAttributeParser() for a non-simple Class");
 }
@@ -307,8 +323,9 @@ string Class::getClassname() const {
 }
 
 string Class::getBaseHeader() const {
-    if(base->isSimple())
+    if (base->isSimple()) {
         return base->getBaseHeader();
+    }
 
     return "\"" + base->getClassname() + ".h\"";
 }
@@ -328,8 +345,9 @@ void Class::writeImplementation(ostream& os) const {
     os << "#include \"" << className << ".h\"" << endl;
 
     //no implementation needed for simple types
-    if(isSimple())
+    if (isSimple()) {
         return;
+    }
 
     os << endl;
     os << "using namespace std;" << endl;
@@ -338,25 +356,29 @@ void Class::writeImplementation(ostream& os) const {
     os << endl;
 
     if (needsProtectedDefaultConstructor()) {
-        if(base && !base->isSimple())
+        if (base && !base->isSimple()) {
             os << className << "::" << className << "() : " << base->getClassname() << "() {}" << endl;
-        else
+        }
+        else {
             os << className << "::" << className << "() {}" << endl;
+        }
         os << endl;
     }
 
     //constructors
-    for(list<Constructor>::const_iterator it = constructors.begin(); it != constructors.end(); it++) {
+    for (list<Constructor>::const_iterator it = constructors.begin(); it != constructors.end(); it++) {
         it->writeBody(os);
         os << endl;
     }
 
     //method implementations
     //unmarshalling constructors
-    if(base && !base->isSimple())
+    if (base && !base->isSimple()) {
         os << className << "::" << className << "(std::istream& is) : " << base->getClassname() << "() {" << endl;
-    else
+    }
+    else {
         os << className << "::" << className << "(std::istream& is) {" << endl;
+    }
 
     os << "\tis >> *this;" << endl;
     os << "}" << endl;
@@ -410,9 +432,11 @@ set<string> Class::getIncludedClasses() const {
     set<string> classesToInclude;
 
     //return classes of any simple non-builtin elements and any required non-simple elements
-    for(list<Member>::const_iterator it = members.begin(); it != members.end(); it++)
-        if (it->cl && ((!it->cl->isBuiltIn() && it->cl->isSimple()) || (it->isRequired() && !it->cl->isSimple())))
+    for (list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
+        if (it->cl && ((!it->cl->isBuiltIn() && it->cl->isSimple()) || (it->isRequired() && !it->cl->isSimple()))) {
             classesToInclude.insert(it->cl->getClassname());
+        }
+    }
 
     return classesToInclude;
 }
@@ -422,9 +446,11 @@ set<string> Class::getPrototypeClasses() const {
     set<string> classesToPrototype;
 
     //return the classes of any non-simple non-required elements
-    for(list<Member>::const_iterator it = members.begin(); it != members.end(); it++)
-        if(it->cl && classesToInclude.find(it->cl->getClassname()) == classesToInclude.end() && !it->cl->isSimple() && !it->isRequired())
+    for (list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
+        if (it->cl && classesToInclude.find(it->cl->getClassname()) == classesToInclude.end() && !it->cl->isSimple() && !it->isRequired()) {
             classesToPrototype.insert(it->cl->getClassname());
+        }
+    }
 
     return classesToPrototype;
 }
@@ -437,8 +463,9 @@ void Class::writeHeader(ostream& os) const {
 
     os << "#include <vector>" << endl;
 
-    if(isDocument)
+    if (isDocument) {
         os << "#include <istream>" << endl;
+    }
 
     os << "#include <xercesc/util/XercesDefs.hpp>" << endl;
     os << "XERCES_CPP_NAMESPACE_BEGIN class DOMElement; XERCES_CPP_NAMESPACE_END" << endl;
@@ -450,42 +477,51 @@ void Class::writeHeader(ostream& os) const {
     os << "#undef minor" << endl;
     
     //simple types only need a typedef
-    if(isSimple()) {
+    if (isSimple()) {
         os << "typedef " << base->getClassname() << " " << name.second << ";" << endl;
     } else {
-        if(base && base->hasHeader())
+        if (base && base->hasHeader()) {
             os << "#include " << getBaseHeader() << endl;
-        
-        if(!base || base->isSimple())
-            os << "#include <libschematicpp/XMLObject.h>" << endl;
+        }
 
-        if(isDocument)
+        if (!base || base->isSimple()) {
+            os << "#include <libschematicpp/XMLObject.h>" << endl;
+        }
+
+        if (isDocument) {
             os << "#include <libschematicpp/XMLDocument.h>" << endl;
+        }
 
         //include member classes that we can't prototype
         set<string> classesToInclude = getIncludedClasses();
 
-        for(set<string>::const_iterator it = classesToInclude.begin(); it != classesToInclude.end(); it++)
+        for (set<string>::const_iterator it = classesToInclude.begin(); it != classesToInclude.end(); it++) {
             os << "#include \"" << *it << ".h\"" << endl;
+        }
 
         os << endl;
 
         set<string> classesToPrototype = getPrototypeClasses();
 
         //member class prototypes, but only for classes that we haven't already included
-        for(set<string>::const_iterator it = classesToPrototype.begin(); it != classesToPrototype.end(); it++)
+        for (set<string>::const_iterator it = classesToPrototype.begin(); it != classesToPrototype.end(); it++) {
             os << "class " << *it << ";" << endl;
+        }
 
-        if(classesToPrototype.size() > 0)
+        if (classesToPrototype.size() > 0) {
             os << endl;
+        }
 
-        if(isDocument)
+        if (isDocument) {
             os << "class " << className << " : public " << base->getClassname() << ", public schematicpp::XMLDocument";
-        else if(base && !base->isSimple())
+        }
+        else if (base && !base->isSimple()) {
             os << "class " << className << " : public " << base->getClassname();
-        else
+        }
+        else {
             os << "class " << className << " : public schematicpp::XMLObject";
-        
+        }
+
         os << " {" << endl;
 
         if (needsProtectedDefaultConstructor()) {
@@ -493,10 +529,11 @@ void Class::writeHeader(ostream& os) const {
             os << "\t" << className << "();" << endl;
             os << endl;
 
-            if(friends.size()) {
+            if (friends.size()) {
                 //add friends
-                for(set<string>::const_iterator it = friends.begin(); it != friends.end(); it++)
+                for (set<string>::const_iterator it = friends.begin(); it != friends.end(); it++) {
                     os << "\tfriend class " << *it << ";" << endl;
+                }
 
                 os << endl;
             }
@@ -505,7 +542,7 @@ void Class::writeHeader(ostream& os) const {
         os << "public:" << endl;
 
         //constructors
-        for(list<Constructor>::const_iterator it = constructors.begin(); it != constructors.end(); it++) {
+        for (list<Constructor>::const_iterator it = constructors.begin(); it != constructors.end(); it++) {
             os << "\t";
             it->writePrototype(os, true);
             os << endl;
@@ -536,34 +573,42 @@ void Class::writeHeader(ostream& os) const {
         os << endl;
 
         //simpleContent
-        if(base && base->isSimple())
+        if (base && base->isSimple()) {
             os << "\t" << base->getClassname() << " content;" << endl;
+        }
 
         //members
-        for(list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
+        for (list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
             os << "\t";
 
             //elements of unknown types are shown commented out
-            if (!it->cl)
+            if (!it->cl) {
                 os << "//";
+            }
 
-            if(it->isOptional())
+            if (it->isOptional()) {
                 os << "schematicpp::optional<";
-            else if(it->isArray())
+            }
+            else if (it->isArray()) {
                 os << "std::vector<";
+            }
 
-            if (it->cl)
+            if (it->cl) {
                 os << it->cl->getClassname();
-            else
+            }
+            else {
                 os << it->type.second;
+            }
 
-            if(it->isOptional() || it->isArray())
-                os << " >";
+            if (it->isOptional() || it->isArray()) {
+                os << ">";
+            }
 
             os << " " << it->name << ";";
 
-            if (!it->cl)
+            if (!it->cl) {
                 os << "\t//" << it->type.first << ":" << it->type.second << " is undefined";
+            }
 
             os << endl;
         }
@@ -575,11 +620,13 @@ void Class::writeHeader(ostream& os) const {
         os << endl;
 
         //include classes that we prototyped earlier
-        for(set<string>::const_iterator it = classesToPrototype.begin(); it != classesToPrototype.end(); it++)
+        for (set<string>::const_iterator it = classesToPrototype.begin(); it != classesToPrototype.end(); it++) {
             os << "#include \"" << *it << ".h\"" << endl;
+        }
 
-        if(classesToPrototype.size() > 0)
+        if (classesToPrototype.size() > 0) {
             os << endl;
+        }
     }
 
     os << "#endif //_" << className << "_H" << endl;
@@ -590,9 +637,11 @@ bool Class::shouldUseConstReferences() const {
 }
 
 bool Class::needsProtectedDefaultConstructor() const {
-    for (std::list<Constructor>::const_iterator it = constructors.begin(); it != constructors.end(); it++)
-        if (it->isDefaultConstructor())
+    for (std::list<Constructor>::const_iterator it = constructors.begin(); it != constructors.end(); it++) {
+        if (it->isDefaultConstructor()) {
             return false;
+        }
+    }
 
     return true;
 }
@@ -612,13 +661,14 @@ bool Class::Member::isRequired() const {
 std::list<Class::Member> Class::getElements(bool includeBase, bool vectors, bool optionals) const {
     std::list<Member> ret;
 
-    if(includeBase && base)
+    if (includeBase && base) {
         ret = base->getElements(true, vectors, optionals);
+    }
 
     //regard the contents of a complexType with simpleContents as a required
     //element named "content" since we already have that as an element
     //check isBuiltIn() else we end up adding "content" more than once
-    if(base && base->isSimple() && base->isBuiltIn()) {
+    if (base && base->isSimple() && base->isBuiltIn()) {
         Member contentMember;
         contentMember.name = "content";
         contentMember.cl = base;
@@ -627,9 +677,11 @@ std::list<Class::Member> Class::getElements(bool includeBase, bool vectors, bool
         ret.push_back(contentMember);
     }
 
-    for(std::list<Member>::const_iterator it = members.begin(); it != members.end(); it++)
-        if(it->isRequired() || (it->isArray() && vectors) || (it->isOptional() && optionals))
+    for (std::list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
+        if (it->isRequired() || (it->isArray() && vectors) || (it->isOptional() && optionals)) {
             ret.push_back(*it);
+        }
+    }
 
     return ret;
 }
@@ -639,8 +691,9 @@ Class::Constructor::Constructor(Class *cl) : cl(cl) {
 
 Class::Constructor::Constructor(Class *cl, bool vectors, bool optionals) :
         cl(cl) {
-    if(cl->base)
+    if (cl->base) {
         baseArgs = cl->base->getElements(true, vectors, optionals);
+    }
 
     ourArgs = cl->getElements(false, vectors, optionals);
 }
@@ -657,17 +710,19 @@ bool Class::Constructor::hasSameSignature(const Constructor& other) const {
     list<Member> a = getAllArguments();
     list<Member> b = other.getAllArguments();
 
-    if(a.size() != b.size())
+    if (a.size() != b.size()) {
         return false;
+    }
 
     list<Member>::iterator ita = a.begin(), itb = b.begin();
 
     //return false if the arguments in any position are of different types or
     //if one is an array but the other isn't
-    for(; ita != a.end(); ita++, itb++)
-        if(ita->cl && (ita->cl->getClassname() != itb->cl->getClassname() || ita->isArray() != itb->isArray()))
+    for (; ita != a.end(); ita++, itb++) {
+        if (ita->cl && (ita->cl->getClassname() != itb->cl->getClassname() || ita->isArray() != itb->isArray())) {
             return false;
-
+        }
+    }
     return true;
 }
 
@@ -680,32 +735,39 @@ void Class::Constructor::writePrototype(ostream &os, bool withSemicolon) const {
 
     os << cl->getClassname() << "(";
 
-    for(list<Member>::const_iterator it = all.begin(); it != all.end(); it++) {
-        if (!it->cl)
+    for (list<Member>::const_iterator it = all.begin(); it != all.end(); it++) {
+        if (!it->cl) {
             continue;
+        }
 
-        if(it != all.begin())
+        if (it != all.begin()) {
             os << ", ";
+        }
 
-        if(it->isArray())
+        if (it->isArray()) {
             os << "const std::vector<";
-        else if(it->cl->shouldUseConstReferences())
+        }
+        else if (it->cl->shouldUseConstReferences()) {
             os << "const ";
+        }
 
         os << it->cl->getClassname();
 
-        if(it->isArray())
+        if (it->isArray()) {
             os << " >&";
-        else if(it->cl->shouldUseConstReferences())
+        }
+        else if (it->cl->shouldUseConstReferences()) {
             os << "&";
+        }
 
         os << " " << it->name;
     }
 
     os << ")";
 
-    if(withSemicolon)
+    if (withSemicolon) {
         os << ";";
+    }
 }
 
 void Class::Constructor::writeBody(ostream &os) const {
@@ -715,25 +777,28 @@ void Class::Constructor::writeBody(ostream &os) const {
 
     writePrototype(os, false);
 
-    if(all.size() > 0 || (cl->base && !cl->base->isSimple()))
+    if (all.size() > 0 || (cl->base && !cl->base->isSimple())) {
         os << " :" << endl << "\t";
+    }
 
     bool hasParens = false;
 
-    if(cl->base && !cl->base->isSimple()) {
+    if (cl->base && !cl->base->isSimple()) {
         //pass the base class' elements
         os << cl->base->getClassname() << "(";
         bool first = true;
 
-        for(list<Member>::const_iterator it = baseArgs.begin(); it != baseArgs.end(); it++) {
-            if (!it->cl)
+        for (list<Member>::const_iterator it = baseArgs.begin(); it != baseArgs.end(); it++) {
+            if (!it->cl) {
                 continue;
+            }
 
-            if (first)
+            if (first) {
                 first = false;
-            else
+            }
+            else {
                 os << ", ";
-
+            }
             os << it->name;
         }
 
@@ -743,14 +808,17 @@ void Class::Constructor::writeBody(ostream &os) const {
 
     bool first = true;
 
-    for(list<Member>::const_iterator it = ourArgs.begin(); it != ourArgs.end(); it++) {
-        if (!it->cl)
+    for (list<Member>::const_iterator it = ourArgs.begin(); it != ourArgs.end(); it++) {
+        if (!it->cl) {
             continue;
+        }
 
-        if (first && !hasParens)
+        if (first && !hasParens) {
             first = false;
-        else if(hasParens || !first)
+        }
+        else if (hasParens || !first) {
             os << ", ";
+        }
 
         os << it->name << "(" << it->name << ")";
     }
