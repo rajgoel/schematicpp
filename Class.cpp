@@ -1,4 +1,10 @@
-/* Copyright 2011 Tomas Härdin
+/*
+ * File:   main.cpp
+ * Authors: Asvin Goel (rajgoel), Tomas Härdin (tjoppen)
+ *
+ * Forked from: https://github.com/Tjoppen/james (June 6, 2023)
+ *
+ * LICENSE:
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,11 +17,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
- * File:   Class.cpp
- * Author: tjoppen
- * 
- * Created on February 14, 2010, 4:20 PM
  */
 
 #include "Class.h"

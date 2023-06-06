@@ -786,6 +786,9 @@ int main_wrapper(int argc, char** argv) {
         addClass(new DateTimeClass);
         addClass(new BooleanClass);
         addClass(new LanguageClass);
+        addClass(new QualifiedNameClass);
+        addClass(new IdClass);
+        addClass(new IdRefClass);
         addClass(new HexBinaryClass);
 
         string outputDir = argv[1];

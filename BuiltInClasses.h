@@ -1,4 +1,10 @@
-/* Copyright 2011 Tomas Härdin
+/*
+ * File:   main.cpp
+ * Authors: Asvin Goel (rajgoel), Tomas Härdin (tjoppen)
+ *
+ * Forked from: https://github.com/Tjoppen/james (June 6, 2023)
+ *
+ * LICENSE:
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,11 +17,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
- * File:   BuiltInClasses.h
- * Author: tjoppen
- *
- * Created on February 14, 2010, 6:48 PM
  */
 
 #ifndef _BUILTINCLASSES_H
@@ -148,6 +149,9 @@ GENERATE_BUILTIN_ALIAS(TimeClass, StringClass, "time")};
 GENERATE_BUILTIN_ALIAS(DateClass, StringClass, "date")};
 GENERATE_BUILTIN_ALIAS(DateTimeClass, StringClass, "dateTime")};
 GENERATE_BUILTIN_ALIAS(LanguageClass, StringClass, "language")};
+GENERATE_BUILTIN_ALIAS(QualifiedNameClass, StringClass, "QName")};
+GENERATE_BUILTIN_ALIAS(IdClass, StringClass, "ID")};
+GENERATE_BUILTIN_ALIAS(IdRefClass, StringClass, "IDREF")};
 
 #endif /* _BUILTINCLASSES_H */
 
