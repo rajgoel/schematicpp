@@ -562,6 +562,9 @@ static void parseElement(DOMElement *element, string tns) {
 static void resolveMemberRefs(map<FullName, Class*>& classMap) {
     for (map<FullName, Class*>::iterator it = classMap.begin(); it != classMap.end(); it++) {
         for (list<Class::Member>::iterator it2 = it->second->members.begin(); it2 != it->second->members.end(); it2++) {
+            // assume same namespace if missing
+            if (it2->type.first == "") it2->type.first = it->second->name.first;
+
             if (classes.find(it2->type) == classes.end()) {
                 if (it2->minOccurs > 0) {
                     if (strict) {
