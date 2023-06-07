@@ -40,22 +40,11 @@ A short guide to usage
 
 Running the program without arguments produces the following usage information:
 
- USAGE: schematicpp [-v] [-s] [-d] [-nr] [-nv] [-a] [-cmake targetname] [--dry-run] output-dir list-of-XSL-documents
+ USAGE: schematicpp [-v] [-s] [-cmake targetname] [--dry-run] output-dir list-of-XSL-documents
   -v         Verbose mode
   -s         Strict mode - throw errors when expected child element is missing 
-  -d         Generate default constructors
-  -nr        Don't generate constructors taking required elements
-  -nv        Don't generate constructors taking required elements and vectors
-  -a         Generate constructors taking all elements
   -cmake     Generate CMakeLists.txt with all generated .cpp files as part of a library with the specified target name
   --dry-run  Perform generation but don't write anything to disk - instead does exit(1) if any file changes
-
-By default schematicpp generates at most two constructors for the generated classes.
-The first constructor takes all required elements. The intent is to not allow the user to forget setting required elements.
-The second constructor includes all vector element in addition to the required elements. This is meant more as a convenience.
-No default constructors are generated, except for types lacking members - for those there is only one constructor, which is the default cosntructor.
-The -d switch is used to tell schematicpp to generate defalult constructors for all classes.
-The -a switch also adds constructors taking optional elements. It is not very useful though, hence why they're disabled by default.
 
 The -cmake switch is used to generate a CMakeLists.txt file along with the .h and .cpp files.
 This CMake file turns the loose collection of files into a static library, suitable for inclusion in a CMake project via add_subdirectory().
@@ -135,6 +124,7 @@ example.cpp
 -----------
 
 #include <iostream>
+#include <string>
 #include <xercesc/util/PlatformUtils.hpp>
 #include "generated/PersonDocument.h"
 #include "generated/PersonListDocument.h"
@@ -149,7 +139,8 @@ int main() {
     //create a list containing personIn and some other person
     PersonListDocument list;
     list.person.push_back(personIn);
-    list.person.push_back(PersonType("Some Otherguy", "Somewhere 999", 1985));
+    std::string xmlStr("<person address=\"Somewhere 999\" birthYear=\"1985\" name=\"Some Otherguy\"/>");
+    list.person.push_back(PersonType(xmlStr));
 
     //finally, marshal the list to stdout
     std::cout << list;

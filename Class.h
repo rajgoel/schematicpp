@@ -1,4 +1,10 @@
-/* Copyright 2011 Tomas Härdin
+/*
+ * File:   main.cpp
+ * Authors: Asvin Goel (rajgoel), Tomas Härdin (tjoppen)
+ *
+ * Forked from: https://github.com/Tjoppen/james (June 6, 2023)
+ *
+ * LICENSE:
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,11 +17,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
- * File:   Class.h
- * Author: tjoppen
- *
- * Created on February 14, 2010, 4:20 PM
  */
 
 #ifndef _CLASS_H
@@ -58,41 +59,6 @@ public:
     };
 
 private:
-    /**
-     * For dealing with constructor parameter lists.
-     */
-    class Constructor {
-    public:
-        Class *cl;
-        std::list<Member> baseArgs;
-        std::list<Member> ourArgs;
-
-        Constructor(Class *cl);
-        Constructor(Class *cl, bool vectors, bool optionals);
-
-        /**
-         * Concatenates and returns ourArgs and baseArgs.
-         */
-        std::list<Member> getAllArguments() const;
-
-        /**
-         * Returns whether this constructor has the same signature as the other.
-         */
-        bool hasSameSignature(const Constructor& other) const;
-
-        /**
-         * Returns true if this is a default constructor (meaning it takes no arguments).
-         */
-        bool isDefaultConstructor() const;
-
-        void writePrototype(std::ostream &os, bool withSemicolon) const;
-        void writeBody(std::ostream &os) const;
-    };
-
-    std::list<Constructor> constructors;
-
-    void addConstructor(const Constructor& constructor);
-
     //classes that we should friend so they can access our default constructor
     std::set<std::string> friends;
 
@@ -185,11 +151,6 @@ public:
      * Counter cases include xs:int, xs:byte etc.
      */
     virtual bool shouldUseConstReferences() const;
-
-    /**
-     * Returns true if we need to add a protected default constructor.
-     */
-    bool needsProtectedDefaultConstructor() const;
 
     std::set<std::string> getIncludedClasses() const;
     std::set<std::string> getPrototypeClasses() const;

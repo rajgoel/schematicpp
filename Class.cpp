@@ -27,13 +27,8 @@
 using namespace std;
 
 extern bool verbose;
-extern bool generateDefaultCtor;
-extern bool generateRequiredCtor;
-extern bool generateRequiredAndVectorsCtor;
-extern bool generateAllCtor;
 
 const string variablePostfix = "_schematicpp";
-
 const string nodeWithPostfix = "node" + variablePostfix;
 const string tempWithPostfix = "temp" + variablePostfix;
 const string convertedWithPostfix = "converted" + variablePostfix;
@@ -62,28 +57,7 @@ bool Class::hasBase() const {
     return baseType.second.length() > 0;
 }
 
-void Class::addConstructor(const Constructor& constructor) {
-    //first make sure an identical constructor doesn't already exist
-    for (list<Constructor>::const_iterator it = constructors.begin(); it != constructors.end(); it++) {
-        if (it->hasSameSignature(constructor)) {
-            return;
-        }
-    }
-
-    constructors.push_back(constructor);
-}
-
 void Class::doPostResolveInit() {
-    //figure out which constructors we need
-    if (generateDefaultCtor)             addConstructor(Constructor(this));
-    if (generateRequiredCtor)            addConstructor(Constructor(this, false, false));
-    if (generateRequiredAndVectorsCtor)  addConstructor(Constructor(this, true,  false));
-    if (generateAllCtor)                 addConstructor(Constructor(this, true,  true));
-
-    if (constructors.size() == 0) { 
-        throw runtime_error("No constructors in class " + getClassname());
-    } 
-
     //make sure members classes add us as their friend
     for (std::list<Member>::iterator it = members.begin(); it != members.end(); it++) {
         //there's no need to befriend ourselves
@@ -355,21 +329,13 @@ void Class::writeImplementation(ostream& os) const {
     os << "using namespace schematicpp;" << endl;
     os << endl;
 
-    if (needsProtectedDefaultConstructor()) {
-        if (base && !base->isSimple()) {
-            os << className << "::" << className << "() : " << base->getClassname() << "() {}" << endl;
-        }
-        else {
-            os << className << "::" << className << "() {}" << endl;
-        }
-        os << endl;
+    if (base && !base->isSimple()) {
+        os << className << "::" << className << "() : " << base->getClassname() << "() {}" << endl;
     }
-
-    //constructors
-    for (list<Constructor>::const_iterator it = constructors.begin(); it != constructors.end(); it++) {
-        it->writeBody(os);
-        os << endl;
+    else {
+        os << className << "::" << className << "() {}" << endl;
     }
+    os << endl;
 
     //method implementations
     //unmarshalling constructors
@@ -384,10 +350,14 @@ void Class::writeImplementation(ostream& os) const {
     os << "}" << endl;
     os << endl;
 
-    //factory method
-    os << className << " " << className << "::fromString(const std::string& str) {" << endl;
+    if (base && !base->isSimple()) {
+        os << className << "::" << className << "(const std::string& str) : " << base->getClassname() << "() {" << endl;
+    }
+    else {
+        os << className << "::" << className << "(const std::string& str) {" << endl;
+    }
     os << "\tistringstream iss(str);" << endl;
-    os << "\treturn " << className << "(iss);" << endl;
+    os << "\tiss >> *this;" << endl;
     os << "}" << endl;
     os << endl;
 
@@ -524,39 +494,27 @@ void Class::writeHeader(ostream& os) const {
 
         os << " {" << endl;
 
-        if (needsProtectedDefaultConstructor()) {
-            os << "protected:" << endl;
-            os << "\t" << className << "();" << endl;
-            os << endl;
+        os << "protected:" << endl;
+        os << "\t" << className << "();" << endl;
+        os << endl;
 
-            if (friends.size()) {
-                //add friends
-                for (set<string>::const_iterator it = friends.begin(); it != friends.end(); it++) {
-                    os << "\tfriend class " << *it << ";" << endl;
-                }
-
-                os << endl;
+        if (friends.size()) {
+            //add friends
+            for (set<string>::const_iterator it = friends.begin(); it != friends.end(); it++) {
+                os << "\tfriend class " << *it << ";" << endl;
             }
+
+            os << endl;
         }
 
         os << "public:" << endl;
 
-        //constructors
-        for (list<Constructor>::const_iterator it = constructors.begin(); it != constructors.end(); it++) {
-            os << "\t";
-            it->writePrototype(os, true);
-            os << endl;
-        }
-
-        //prototypes
         //add constructor for unmarshalling this document from an istream of string
         os << "\t" << className << "(std::istream& is);" << endl;
         os << endl;
 
-        //factory method for unmarshalling std::string
-        //we can't use a constructor since that would conflict with the required
-        //element constructor for a type that only has one string element
-        os << "\tstatic " << className <<  " fromString(const std::string& str);" << endl;
+        //add constructor for unmarshalling this document from a string
+        os << "\t" << className << "(const std::string& str);" << endl;
         os << endl;
 
         //string cast operator
@@ -636,16 +594,6 @@ bool Class::shouldUseConstReferences() const {
     return true;
 }
 
-bool Class::needsProtectedDefaultConstructor() const {
-    for (std::list<Constructor>::const_iterator it = constructors.begin(); it != constructors.end(); it++) {
-        if (it->isDefaultConstructor()) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
 bool Class::Member::isArray() const {
     return maxOccurs > 1 || maxOccurs == UNBOUNDED;
 }
@@ -688,142 +636,4 @@ std::list<Class::Member> Class::getElements(bool includeBase, bool vectors, bool
     return ret;
 }
 
-Class::Constructor::Constructor(Class *cl) : cl(cl) {
-}
 
-Class::Constructor::Constructor(Class *cl, bool vectors, bool optionals) :
-        cl(cl) {
-    if (cl->base) {
-        baseArgs = cl->base->getElements(true, vectors, optionals);
-    }
-
-    ourArgs = cl->getElements(false, vectors, optionals);
-}
-
-list<Class::Member> Class::Constructor::getAllArguments() const {
-    list<Class::Member> ret = baseArgs;
-
-    ret.insert(ret.end(), ourArgs.begin(), ourArgs.end());
-
-    return ret;
-}
-
-bool Class::Constructor::hasSameSignature(const Constructor& other) const {
-    list<Member> a = getAllArguments();
-    list<Member> b = other.getAllArguments();
-
-    if (a.size() != b.size()) {
-        return false;
-    }
-
-    list<Member>::iterator ita = a.begin(), itb = b.begin();
-
-    //return false if the arguments in any position are of different types or
-    //if one is an array but the other isn't
-    for (; ita != a.end(); ita++, itb++) {
-        if (ita->cl && (ita->cl->getClassname() != itb->cl->getClassname() || ita->isArray() != itb->isArray())) {
-            return false;
-        }
-    }
-    return true;
-}
-
-bool Class::Constructor::isDefaultConstructor() const {
-    return baseArgs.size() + ourArgs.size() == 0;
-}
-
-void Class::Constructor::writePrototype(ostream &os, bool withSemicolon) const {
-    list<Member> all = getAllArguments();
-
-    os << cl->getClassname() << "(";
-
-    for (list<Member>::const_iterator it = all.begin(); it != all.end(); it++) {
-        if (!it->cl) {
-            continue;
-        }
-
-        if (it != all.begin()) {
-            os << ", ";
-        }
-
-        if (it->isArray()) {
-            os << "const std::vector<";
-        }
-        else if (it->cl->shouldUseConstReferences()) {
-            os << "const ";
-        }
-
-        os << it->cl->getClassname();
-
-        if (it->isArray()) {
-            os << " >&";
-        }
-        else if (it->cl->shouldUseConstReferences()) {
-            os << "&";
-        }
-
-        os << " " << it->name;
-    }
-
-    os << ")";
-
-    if (withSemicolon) {
-        os << ";";
-    }
-}
-
-void Class::Constructor::writeBody(ostream &os) const {
-    list<Member> all = getAllArguments();
-
-    os << cl->getClassname() << "::";
-
-    writePrototype(os, false);
-
-    if (all.size() > 0 || (cl->base && !cl->base->isSimple())) {
-        os << " :" << endl << "\t";
-    }
-
-    bool hasParens = false;
-
-    if (cl->base && !cl->base->isSimple()) {
-        //pass the base class' elements
-        os << cl->base->getClassname() << "(";
-        bool first = true;
-
-        for (list<Member>::const_iterator it = baseArgs.begin(); it != baseArgs.end(); it++) {
-            if (!it->cl) {
-                continue;
-            }
-
-            if (first) {
-                first = false;
-            }
-            else {
-                os << ", ";
-            }
-            os << it->name;
-        }
-
-        os << ")";
-        hasParens = true;
-    }
-
-    bool first = true;
-
-    for (list<Member>::const_iterator it = ourArgs.begin(); it != ourArgs.end(); it++) {
-        if (!it->cl) {
-            continue;
-        }
-
-        if (first && !hasParens) {
-            first = false;
-        }
-        else if (hasParens || !first) {
-            os << ", ";
-        }
-
-        os << it->name << "(" << it->name << ")";
-    }
-
-    os << " {" << endl << "}" << endl;
-}

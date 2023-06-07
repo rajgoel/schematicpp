@@ -52,10 +52,6 @@ static void printUsage() {
     cerr << "USAGE: schematicpp [-v] [-d] [-nr] [-nv] [-a] [-cmake targetname] [--dry-run] output-dir list-of-XSL-documents" << endl;
     cerr << " -v\tVerbose mode" << endl;
     cerr << " -s\tStrict mode - throw errors when expected child element is missing" << endl;
-    cerr << " -d\tGenerate default constructors" << endl;
-    cerr << " -nr\tDon't generate constructors taking required elements" << endl;
-    cerr << " -nv\tDon't generate constructors taking required elements and vectors" << endl;
-    cerr << " -a\tGenerate constructors taking all elements" << endl;
     cerr << " -cmake\tGenerate CMakeLists.txt with all generated .cpp files as part of a library with the specified target name" << endl;
     cerr << " --dry-run\tPerform generation but don't write anything to disk - instead does exit(1) if any file changes" << endl;
     cerr << endl;
@@ -77,10 +73,6 @@ map<FullName, Class*> groups;
 
 bool verbose = false;
 bool strict = false;
-bool generateDefaultCtor = false;
-bool generateRequiredCtor = true;
-bool generateRequiredAndVectorsCtor = true;
-bool generateAllCtor = false;
 static std::string cmakeTargetName;
 
 static Class* addClass(Class *cl, map<FullName, Class*>& to = classes) {
@@ -772,26 +764,6 @@ int main_wrapper(int argc, char** argv) {
                 if (verbose) cerr << "Strict mode" << endl;
 
                 continue;
-            } else if (!strcmp(argv[1], "-d")) {
-                generateDefaultCtor = true;
-                if (verbose) cerr << "Generating default constructors" << endl;
-
-                continue;
-            } else if (!strcmp(argv[1], "-nr")) {
-                generateRequiredCtor = false;
-                if (verbose) cerr << "Not generating constructors that take the required elements" << endl;
-
-                continue;
-            } else if (!strcmp(argv[1], "-nv")) {
-                generateRequiredAndVectorsCtor = false;
-                if (verbose) cerr << "Not generating constructors that take the required elements and vectors" << endl;
-
-                continue;
-            } else if (!strcmp(argv[1], "-a")) {
-                generateAllCtor = true;
-                if (verbose) cerr << "Generating constructors that take all elements" << endl;
-
-                continue;
             } else if (!strcmp(argv[1], "-cmake")) {
                 cmakeTargetName = argv[2];
                 if (verbose) cerr << "CMake target name: " << cmakeTargetName << endl;
@@ -802,24 +774,12 @@ int main_wrapper(int argc, char** argv) {
                 continue;
             } else if (!strcmp(argv[1], "--dry-run")) {
                 dry_run = true;
-                if (verbose) cerr << "Peforming dry run" << endl;
+                if (verbose) cerr << "Performing dry run" << endl;
 
                 continue;
             }
 
             break;
-        }
-
-        //sanity check the ctor generation settings
-        if (!generateDefaultCtor && !generateRequiredCtor && !generateRequiredAndVectorsCtor) {
-            if (!generateAllCtor) {
-                cerr << "Tried to generate code without any constructors" << endl;
-            }
-            else {
-                cerr << "Tried to generate code with only the 'all' constructors, which would make dealing with optional elements too hard" << endl;
-            }
-
-            return 1;
         }
 
         XMLPlatformUtils::Initialize();
