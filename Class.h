@@ -136,6 +136,11 @@ public:
     virtual std::string getClassname() const;
 
     /**
+     * Should return the cpp classname used for this Class.
+     */
+    virtual std::string getCppClassname() const;
+
+    /**
      * Returns name of header wherein the base class is defined.
      */
     virtual std::string getBaseHeader() const;

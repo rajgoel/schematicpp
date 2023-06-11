@@ -15,15 +15,14 @@
 cmake_minimum_required(VERSION 2.6)
 project(schematicpp)
 
-add_subdirectory(libschematicpp)
-
 add_executable(schematicpp
     main.cpp
+    XercesString.cpp
     Class.cpp
     BuiltInClasses.cpp
 )
 
-target_link_libraries(schematicpp libschematicpp)
+target_link_libraries(schematicpp)
 
 # Account for the Xerces-C++ 3.1.x library being called xerces-c_3 on WIN32
 if(WIN32)

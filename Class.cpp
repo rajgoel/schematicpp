@@ -128,11 +128,12 @@ string Class::generateAppender() const {
         if (it->isArray()) {
             string itName = "it" + variablePostfix;
             setterName = "(*" + itName + ")";
-            oss << "\tfor (std::vector<" << it->cl->getClassname() << ">::const_iterator " << itName << " = " << name << ".begin(); " << itName << " != " << name << ".end(); " << itName << "++)" << endl;
+            oss << "\tfor (std::vector<" << it->cl->getCppClassname() << ">::const_iterator " << itName << " = " << name << ".begin(); " << itName << " != " << name << ".end(); " << itName << "++)" << endl;
         } else if (it->isOptional()) {
             //insert a non-null check
-            setterName += ".get()";
-            oss << "\tif (" << name << ".isSet())" << endl;
+//            setterName += ".get()";
+            setterName = "(*" + name + ")";
+            oss << "\tif (" << name << ")" << endl;
         }
 
         oss << "\t{" << endl;
@@ -162,7 +163,7 @@ string Class::generateElementSetter(string memberName, string nodeName, string t
         return base->generateElementSetter(memberName, nodeName, tabs);
     }
 
-    return tabs + memberName + ".appendChildren(" + nodeName + ");";
+    return tabs + memberName + "->appendChildren(" + nodeName + ");";
 }
 
 string Class::generateAttributeSetter(string memberName, string attributeName, string tabs) const {
@@ -215,20 +216,20 @@ string Class::generateParser() const {
 
             oss << "\t\tif (" << nameName << " == \"" << it->name << "\" && " << childName << "->getNodeType() == DOMNode::ELEMENT_NODE) {" << endl;
 
+            string childElementName = "childElement" + variablePostfix;
+            oss << "\t\t\tDOMElement *" << childElementName << " = dynamic_cast<DOMElement*>(" << childName << ");" << endl;
+
             string memberName = it->name;
             if (!it->isRequired()) {
                 memberName += tempWithPostfix;
-                oss << "\t\t\t" << it->cl->getClassname() << " " << memberName << ";" << endl;
+                oss << "\t\t\t" << it->cl->getCppClassname() << " " << memberName << ";" << endl;
             }
-
-            string childElementName = "childElement" + variablePostfix;
-            oss << "\t\t\tDOMElement *" << childElementName << " = dynamic_cast<DOMElement*>(" << childName << ");" << endl;
             oss << it->cl->generateMemberSetter(memberName, childElementName, "\t\t\t");
 
             if (it->isArray()) {
-                oss << "\t\t\t" << it->name << ".push_back(" << memberName << ");" << endl;
+                oss << "\t\t\t" << it->name << ".push_back(std::move(" << memberName << "));" << endl;
             } else if (it->isOptional()) {
-                oss << "\t\t\t" << it->name << " = " << memberName << ";" << endl;
+                oss << "\t\t\t" << it->name << " = std::move(" << memberName << ");" << endl;
             }
 
             oss << "\t\t}" << endl;
@@ -279,7 +280,7 @@ string Class::generateMemberSetter(string memberName, string nodeName, string ta
 
     ostringstream oss;
 
-    oss << tabs << memberName << ".parseNode(" << nodeName << ");" << endl;
+    oss << tabs << memberName << "->parseNode(" << nodeName << ");" << endl;
 
     return oss.str();
 }
@@ -294,6 +295,10 @@ string Class::generateAttributeParser(string memberName, string attributeName, s
 
 string Class::getClassname() const {
     return name.second;
+}
+
+string Class::getCppClassname() const {
+    return isSimple() ? name.second : "std::unique_ptr<" + name.second +">";
 }
 
 string Class::getBaseHeader() const {
@@ -311,7 +316,10 @@ bool Class::hasHeader() const {
 void Class::writeImplementation(ostream& os) const {
     ClassName className = name.second;
 
+    os << "#include \"XMLObject.h\"" << endl;
+/*
     os << "#include <sstream>" << endl;
+
     os << "#include <xercesc/dom/DOMDocument.hpp>" << endl;
     os << "#include <xercesc/dom/DOMElement.hpp>" << endl;
     os << "#include <xercesc/dom/DOMAttr.hpp>" << endl;
@@ -335,6 +343,9 @@ void Class::writeImplementation(ostream& os) const {
     else {
         os << className << "::" << className << "() {}" << endl;
     }
+
+    os << className << "::" << className << "(xercesc::DOMElement *node) { throw runtime_error(\"New constructor\");}" << endl;
+
     os << endl;
 
     //method implementations
@@ -396,6 +407,7 @@ void Class::writeImplementation(ostream& os) const {
     os << "std::istream& operator>> (std::istream& is, " << className << "& obj) {" << endl;
     os << "\treturn schematicpp::unmarshal(is, obj, static_cast<void (schematicpp::XMLObject::*)(xercesc::DOMElement*)>(&" << className << "::parseNode), obj.getName());" << endl;
     os << "}" << endl << endl;
+*/
 }
 
 set<string> Class::getIncludedClasses() const {
@@ -431,20 +443,16 @@ void Class::writeHeader(ostream& os) const {
     os << "#ifndef _" << className << "_H" << endl;
     os << "#define _" << className << "_H" << endl;
 
+    os << "#include <memory>" << endl;
+    os << "#include <optional>" << endl;
     os << "#include <vector>" << endl;
-
+/*
     if (isDocument) {
         os << "#include <istream>" << endl;
     }
 
     os << "#include <xercesc/util/XercesDefs.hpp>" << endl;
     os << "XERCES_CPP_NAMESPACE_BEGIN class DOMElement; XERCES_CPP_NAMESPACE_END" << endl;
-    os << "#include <libschematicpp/HexBinary.h>" << endl;
-    os << "#include <libschematicpp/optional.h>" << endl;
-    os << "// Fix issue with identifiers named 'major' or 'minor'" << endl;
-    os << "// See https://bugzilla.redhat.com/show_bug.cgi?id=130601" << endl;
-    os << "#undef major" << endl;
-    os << "#undef minor" << endl;
     
     //simple types only need a typedef
     if (isSimple()) {
@@ -456,10 +464,6 @@ void Class::writeHeader(ostream& os) const {
 
         if (!base || base->isSimple()) {
             os << "#include <libschematicpp/XMLObject.h>" << endl;
-        }
-
-        if (isDocument) {
-            os << "#include <libschematicpp/XMLDocument.h>" << endl;
         }
 
         //include member classes that we can't prototype
@@ -482,10 +486,7 @@ void Class::writeHeader(ostream& os) const {
             os << endl;
         }
 
-        if (isDocument) {
-            os << "class " << className << " : public " << base->getClassname() << ", public schematicpp::XMLDocument";
-        }
-        else if (base && !base->isSimple()) {
+        if (base && !base->isSimple()) {
             os << "class " << className << " : public " << base->getClassname();
         }
         else {
@@ -496,6 +497,7 @@ void Class::writeHeader(ostream& os) const {
 
         os << "protected:" << endl;
         os << "\t" << className << "();" << endl;
+        os << "\t" << className << "(xercesc::DOMElement *node);" << endl;
         os << endl;
 
         if (friends.size()) {
@@ -545,14 +547,14 @@ void Class::writeHeader(ostream& os) const {
             }
 
             if (it->isOptional()) {
-                os << "schematicpp::optional<";
+                os << "std::optional<";
             }
             else if (it->isArray()) {
                 os << "std::vector<";
             }
 
             if (it->cl) {
-                os << it->cl->getClassname();
+                os << it->cl->getCppClassname();
             }
             else {
                 os << it->type.second;
@@ -586,7 +588,7 @@ void Class::writeHeader(ostream& os) const {
             os << endl;
         }
     }
-
+*/
     os << "#endif //_" << className << "_H" << endl;
 }
 

@@ -44,7 +44,8 @@ class name : public BuiltInClass {\
 public:\
     name() : BuiltInClass(xslName) {}\
     name(std::string xslOverride) : BuiltInClass(xslOverride) {}\
-    std::string getClassname() const {return classname;}
+    std::string getClassname() const {return classname;}\
+    std::string getCppClassname() const {return classname;}
 
 //for types that lack/don't need a header, like int, float etc.
 #define HEADERLESS bool hasHeader() const { return false; }
@@ -139,8 +140,6 @@ GENERATE_BUILTIN_NONCONST(BooleanClass, "boolean", "bool")
         return oss.str();
     }
 };
-
-GENERATE_BUILTIN(HexBinaryClass, "hexBinary", "schematicpp::HexBinary") HEADERLESS};
 
 //aliases
 GENERATE_BUILTIN_ALIAS(IntegerClass, IntClass, "integer")};

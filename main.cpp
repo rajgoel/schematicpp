@@ -40,7 +40,7 @@
 #endif
 
 #include "main.h"
-#include "libschematicpp/XercesString.h"
+#include "XercesString.h"
 #include "Class.h"
 #include "BuiltInClasses.h"
 
@@ -812,7 +812,6 @@ int main_wrapper(int argc, char** argv) {
         addClass(new QualifiedNameClass);
         addClass(new IdClass);
         addClass(new IdRefClass);
-        addClass(new HexBinaryClass);
 
         string outputDir = argv[1];
         vector<string> schemaNames;
