@@ -432,7 +432,6 @@ static void parseComplexType(DOMElement *element, FullName fullName, Class *cl) 
 
             parseComplexType(extension, fullName, cl);
         } else if (name == "attribute") {
-            bool optional = false;
 
             if (!child->hasAttribute(XercesString("type"))) {
                 throw runtime_error("<attribute> missing expected attribute 'type'");
@@ -445,11 +444,20 @@ static void parseComplexType(DOMElement *element, FullName fullName, Class *cl) 
 
             FullName type = toFullName(XercesString(child->getAttribute(XercesString("type"))));
 
+            bool optional = false;
             //check for optional use
             if (child->hasAttribute(XercesString("use")) && XercesString(child->getAttribute(XercesString("use"))) == "optional") {
                 optional = true;
             }
 
+// TODO
+/*
+            XercesString defaultStr;
+            //check for default value
+            if (child->hasAttribute(XercesString("default"))) {
+                defaultStr =  XercesString(child->getAttribute(XercesString("default")));
+            }
+*/
             Class::Member info;
             info.name = attributeName;
             info.type = type;
@@ -804,6 +812,7 @@ int main_wrapper(int argc, char** argv) {
         addClass(new AnyURIClass);
         addClass(new FloatClass);
         addClass(new DoubleClass);
+        addClass(new DecimalClass);
         addClass(new TimeClass);
         addClass(new DateClass);
         addClass(new DateTimeClass);

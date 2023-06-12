@@ -57,6 +57,7 @@ bool Class::hasBase() const {
     return baseType.second.length() > 0;
 }
 
+
 void Class::doPostResolveInit() {
     //make sure members classes add us as their friend
     for (std::list<Member>::iterator it = members.begin(); it != members.end(); it++) {
@@ -102,10 +103,6 @@ string Class::getClassname() const {
     return name.second;
 }
 
-string Class::getCppClassname() const {
-    return isSimple() ? name.second : "std::unique_ptr<" + name.second +">";
-}
-
 string Class::getBaseHeader() const {
     if (base->isSimple()) {
         return base->getBaseHeader();
@@ -121,98 +118,46 @@ bool Class::hasHeader() const {
 void Class::writeImplementation(ostream& os) const {
     ClassName className = name.second;
 
-    os << "#include \"XMLObject.h\"" << endl;
-/*
-    os << "#include <sstream>" << endl;
-
-    os << "#include <xercesc/dom/DOMDocument.hpp>" << endl;
-    os << "#include <xercesc/dom/DOMElement.hpp>" << endl;
-    os << "#include <xercesc/dom/DOMAttr.hpp>" << endl;
-    os << "#include <libschematicpp/XercesString.h>" << endl;
     os << "#include \"" << className << ".h\"" << endl;
+    os << endl;
 
-    //no implementation needed for simple types
-    if (isSimple()) {
-        return;
+    if (!isSimple()) {
+      os << className << "::" << className << "(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent)";
+      if (base) {
+        os << " : " << base->getClassname() << "(className, element, parent)";
+      }
+      else {
+        os << " : XMLObject(className, element, parent)";
+      }
+      os << "{" << endl;
+
+      //members
+      for (list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
+        //elements of unknown types are ignored
+        if (!it->cl) {
+          continue;
+        }
+
+        os << endl;
+
+        if (it->isArray()) {
+          os << "\t" << it->name << " = getChildren<" << it->cl->getClassname() << ">();" << endl;
+        }
+        else if (it->isOptional()) {
+          os << "\tif ( Attribute* attribute = getAttributeByName(\"" << it->name << "\"); attribute != nullptr ) {" << endl; 
+          os << "\t\t" << it->name << " = std::get<2>(*attribute);" << endl;
+          os << "\t}" << endl;
+          os << "\telse {" << endl;
+          os << "\t\t" << it->name << " = std::nullopt;" << endl;
+          os << "\t}" << endl;
+        }
+        else {
+          os << "\t" << it->name << " = std::get<2>(*getAttributeByName(\"" << it->name << "\"));" << endl;
+        }
+      }
+
+      os << "}" << endl;
     }
-
-    os << endl;
-    os << "using namespace std;" << endl;
-    os << "using namespace xercesc;" << endl;
-    os << "using namespace schematicpp;" << endl;
-    os << endl;
-
-    if (base && !base->isSimple()) {
-        os << className << "::" << className << "() : " << base->getClassname() << "() {}" << endl;
-    }
-    else {
-        os << className << "::" << className << "() {}" << endl;
-    }
-
-    os << className << "::" << className << "(xercesc::DOMElement *node) { throw runtime_error(\"New constructor\");}" << endl;
-
-    os << endl;
-
-    //method implementations
-    //unmarshalling constructors
-    if (base && !base->isSimple()) {
-        os << className << "::" << className << "(std::istream& is) : " << base->getClassname() << "() {" << endl;
-    }
-    else {
-        os << className << "::" << className << "(std::istream& is) {" << endl;
-    }
-
-    os << "\tis >> *this;" << endl;
-    os << "}" << endl;
-    os << endl;
-
-    if (base && !base->isSimple()) {
-        os << className << "::" << className << "(const std::string& str) : " << base->getClassname() << "() {" << endl;
-    }
-    else {
-        os << className << "::" << className << "(const std::string& str) {" << endl;
-    }
-    os << "\tistringstream iss(str);" << endl;
-    os << "\tiss >> *this;" << endl;
-    os << "}" << endl;
-    os << endl;
-
-    //string cast operator
-    os << className << "::operator std::string () const {" << endl;
-    os << "\tostringstream oss;" << endl;
-    os << "\toss << *this;" << endl;
-    os << "\treturn oss.str();" << endl;
-    os << "}" << endl;
-    os << endl;
-
-    //getName()
-    os << "std::string " << className << "::getName() const {" << endl;
-    os << "\treturn \"" << className << "\";" << endl;
-    os << "}" << endl;
-    os << endl;
-
-    //getNamespace()
-    os << "std::string " << className << "::getNamespace() const {" << endl;
-    os << "\treturn \"" << name.first << "\";" << endl;
-    os << "}" << endl;
-    os << endl;
-
-    os << "void " << className << "::appendChildren(xercesc::DOMElement *" << nodeWithPostfix << ") const {" << endl;
-    os << generateAppender();
-    os << "}" << endl << endl;
-
-    os << "void " << className << "::parseNode(xercesc::DOMElement *" << nodeWithPostfix << ") {" << endl;
-    os << generateParser() << endl;
-    os << "}" << endl << endl;
-
-    os << "std::ostream& operator<< (std::ostream& os, const " << className << "& obj) {" << endl;
-    os << "\treturn schematicpp::marshal(os, obj, static_cast<void (schematicpp::XMLObject::*)(xercesc::DOMElement*) const>(&" << className << "::appendChildren), obj.getName(), obj.getNamespace());" << endl;
-    os << "}" << endl << endl;
-
-    os << "std::istream& operator>> (std::istream& is, " << className << "& obj) {" << endl;
-    os << "\treturn schematicpp::unmarshal(is, obj, static_cast<void (schematicpp::XMLObject::*)(xercesc::DOMElement*)>(&" << className << "::parseNode), obj.getName());" << endl;
-    os << "}" << endl << endl;
-*/
 }
 
 set<string> Class::getIncludedClasses() const {
@@ -245,12 +190,17 @@ set<string> Class::getPrototypeClasses() const {
 void Class::writeHeader(ostream& os) const {
     ClassName className = name.second;
 
-    os << "#ifndef _" << className << "_H" << endl;
-    os << "#define _" << className << "_H" << endl;
+    os << "#ifndef XML_" << className << "_H" << endl;
+    os << "#define XML_" << className << "_H" << endl;
 
     os << "#include <memory>" << endl;
     os << "#include <optional>" << endl;
     os << "#include <vector>" << endl;
+    os << endl;
+    os << "#include \"XMLObject.h\"" << endl;
+    os << endl;
+    os << "namespace XML {" << endl;
+
 /*
     if (isDocument) {
         os << "#include <istream>" << endl;
@@ -258,6 +208,7 @@ void Class::writeHeader(ostream& os) const {
 
     os << "#include <xercesc/util/XercesDefs.hpp>" << endl;
     os << "XERCES_CPP_NAMESPACE_BEGIN class DOMElement; XERCES_CPP_NAMESPACE_END" << endl;
+*/
     
     //simple types only need a typedef
     if (isSimple()) {
@@ -267,9 +218,6 @@ void Class::writeHeader(ostream& os) const {
             os << "#include " << getBaseHeader() << endl;
         }
 
-        if (!base || base->isSimple()) {
-            os << "#include <libschematicpp/XMLObject.h>" << endl;
-        }
 
         //include member classes that we can't prototype
         set<string> classesToInclude = getIncludedClasses();
@@ -295,14 +243,22 @@ void Class::writeHeader(ostream& os) const {
             os << "class " << className << " : public " << base->getClassname();
         }
         else {
-            os << "class " << className << " : public schematicpp::XMLObject";
+            os << "class " << className << " : public XMLObject";
         }
 
         os << " {" << endl;
 
-        os << "protected:" << endl;
-        os << "\t" << className << "();" << endl;
-        os << "\t" << className << "(xercesc::DOMElement *node);" << endl;
+        os << "\ttemplate<typename T> friend XMLObject* createInstance(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent);" << endl; 
+
+        os << "private:" << endl;
+
+        os << "\tstatic bool registerClass() {" << endl;
+        os << "\t\tXMLObject::factory[\"" << className << "\"] = &createInstance<" << className << ">; /// register function in factory" << endl;
+        os << "\t\treturn true;" << endl;
+        os << "\t};" << endl;
+        os << "\tinline static bool registered = registerClass();" << endl;
+
+        os << "\t" << className << "(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent);" << endl;
         os << endl;
 
         if (friends.size()) {
@@ -315,27 +271,6 @@ void Class::writeHeader(ostream& os) const {
         }
 
         os << "public:" << endl;
-
-        //add constructor for unmarshalling this document from an istream of string
-        os << "\t" << className << "(std::istream& is);" << endl;
-        os << endl;
-
-        //add constructor for unmarshalling this document from a string
-        os << "\t" << className << "(const std::string& str);" << endl;
-        os << endl;
-
-        //string cast operator
-        os << "\toperator std::string () const;" << endl;
-
-        //getName()
-        os << "\tstd::string getName() const;" << endl;
-
-        //getNamespace()
-        os << "\tstd::string getNamespace() const;" << endl;
-        
-        os << "\tvoid appendChildren(xercesc::DOMElement *node) const;" << endl;
-        os << "\tvoid parseNode(xercesc::DOMElement *node);" << endl;
-        os << endl;
 
         //simpleContent
         if (base && base->isSimple()) {
@@ -359,7 +294,7 @@ void Class::writeHeader(ostream& os) const {
             }
 
             if (it->cl) {
-                os << it->cl->getCppClassname();
+                os << it->cl->getClassname() << "&";
             }
             else {
                 os << it->type.second;
@@ -380,9 +315,6 @@ void Class::writeHeader(ostream& os) const {
 
         os << "};" << endl;
         os << endl;
-        os << "std::ostream& operator<< (std::ostream& os, const " << className << "& obj);" << endl;
-        os << "std::istream& operator>> (std::istream& is, " << className << "& obj);" << endl;
-        os << endl;
 
         //include classes that we prototyped earlier
         for (set<string>::const_iterator it = classesToPrototype.begin(); it != classesToPrototype.end(); it++) {
@@ -393,8 +325,10 @@ void Class::writeHeader(ostream& os) const {
             os << endl;
         }
     }
-*/
-    os << "#endif //_" << className << "_H" << endl;
+
+    os << "} // namespace XML" << endl;
+    os << endl;
+    os << "#endif // XML_" << className << "_H" << endl;
 }
 
 bool Class::shouldUseConstReferences() const {

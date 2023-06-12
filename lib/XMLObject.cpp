@@ -6,11 +6,6 @@
 
 namespace XML {
 
-typedef std::string ElementName;
-typedef std::string AttributeName;
-typedef std::string AttributeValue;
-
-
 // Utility class for parsing directly from an std::istream.
 class IStreamInputSource : public xercesc::InputSource {
 protected:
@@ -110,6 +105,29 @@ XMLObject::XMLObject(const ClassName& className, const xercesc::DOMElement* elem
   }
 
 }
+
+Attribute* XMLObject::getAttributeByName(const AttributeName& attributeName) {
+  auto it = std::find_if(attributes.begin(), attributes.end(), 
+                         [attributeName](Attribute& attribute) { return std::get<1>(attribute) == attributeName; }
+  );
+  if (it != attributes.end()) {
+    return &*it;
+  }
+  return nullptr;
+}
+
+std::vector<XMLObject*> XMLObject::getChildrenByName(const ElementName& elementName) {
+  std::vector<XMLObject*> result;
+  for ( auto& child : children ) {
+    if ( child->elementName == elementName ) {
+      result.push_back(child.get());
+    }
+  }
+
+  return result;
+}
+
+
 
 std::string XMLObject::stringify() const {
   std::string xmlString = std::string("<") + (!prefix.empty() ? prefix + ":" : "") + elementName;

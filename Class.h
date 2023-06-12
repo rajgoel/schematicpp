@@ -52,10 +52,10 @@ public:
         int minOccurs;
         int maxOccurs;
         bool isAttribute;   //true if this member is an attribute rather than an element
-
         bool isArray() const;
         bool isOptional() const;    //returns true if this member is optional (not an array)
         bool isRequired() const;
+        bool hasDefault() const;
     };
 
 private:
@@ -101,11 +101,6 @@ public:
      * Should return the name with which to refer to this Class.
      */
     virtual std::string getClassname() const;
-
-    /**
-     * Should return the cpp classname used for this Class.
-     */
-    virtual std::string getCppClassname() const;
 
     /**
      * Returns name of header wherein the base class is defined.

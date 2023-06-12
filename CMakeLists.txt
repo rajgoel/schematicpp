@@ -1,4 +1,9 @@
-# Copyright 2011 Tomas Härdin
+# File:   CMakeLists.txt
+# Authors: Asvin Goel (rajgoel), Tomas Härdin (tjoppen)
+#
+# Forked from: https://github.com/Tjoppen/james (June 6, 2023)
+#
+# LICENSE:
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,5 +36,5 @@ else(WIN32)
     target_link_libraries(schematicpp xerces-c)
 endif(WIN32)
 
-install(TARGETS schematicpp DESTINATION bin)
+#install(TARGETS schematicpp DESTINATION bin)
 
