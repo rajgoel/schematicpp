@@ -40,7 +40,6 @@ public:\
     name(std::string xslOverride) : BuiltInClass(xslOverride) {}\
     std::string getClassname() const {return classname;}\
     bool hasHeader() const { return false; }\
-    bool shouldUseConstReferences() const {return false;}\
 };
 
 #define GENERATE_BUILTIN_ALIAS(name, base, override)\

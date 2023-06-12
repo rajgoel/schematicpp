@@ -113,12 +113,6 @@ public:
      */
     virtual bool hasHeader() const;
 
-    /**
-     * Returns whether the constructor should take const references to this class or not.
-     * Counter cases include xs:int, xs:byte etc.
-     */
-    virtual bool shouldUseConstReferences() const;
-
     std::set<std::string> getIncludedClasses() const;
     std::set<std::string> getPrototypeClasses() const;
 

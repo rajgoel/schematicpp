@@ -359,10 +359,6 @@ void Class::writeHeader(ostream& os) const {
     os << "#endif // XML_" << className << "_H" << endl;
 }
 
-bool Class::shouldUseConstReferences() const {
-    return true;
-}
-
 bool Class::Member::isArray() const {
     return maxOccurs > 1 || maxOccurs == UNBOUNDED;
 }
