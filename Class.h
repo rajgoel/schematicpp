@@ -49,13 +49,13 @@ public:
         std::string name;
         FullName type;
         Class *cl;          //NULL is class is unknown (only allowed for optionals and vectors)
+        std::string defaultStr;
         int minOccurs;
         int maxOccurs;
         bool isAttribute;   //true if this member is an attribute rather than an element
         bool isArray() const;
         bool isOptional() const;    //returns true if this member is optional (not an array)
         bool isRequired() const;
-        bool hasDefault() const;
     };
 
 private:

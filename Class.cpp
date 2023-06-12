@@ -143,16 +143,44 @@ void Class::writeImplementation(ostream& os) const {
         if (it->isArray()) {
           os << "\t" << it->name << " = getChildren<" << it->cl->getClassname() << ">();" << endl;
         }
-        else if (it->isOptional()) {
+        else if (it->isAttribute) {
+          if ( !it->cl->isSimple() ) {
+            throw runtime_error("Complex data type illegal for attribute: " + it->cl->getClassname());
+          }
+          std::string type = it->cl->isBuiltIn() ? it->cl->getClassname() : it->cl->base->getClassname();
+ 
           os << "\tif ( Attribute* attribute = getAttributeByName(\"" << it->name << "\"); attribute != nullptr ) {" << endl; 
-          os << "\t\t" << it->name << " = std::get<2>(*attribute);" << endl;
+          os << "\t\t" << it->name << " = ";
+          if ( type == "std::string" ) {
+            os << "std::get<2>(*attribute);" << endl;
+          }
+          else if ( type == "bool" ) {
+            os << "(std::get<2>(*attribute) == \"true\");" << endl;
+          }
+          else if ( type == "int" ) {
+            os << "std::stoi(std::get<2>(*attribute));" << endl;
+          }
+          else if ( type == "double" ) {
+            os << "std::stod(std::get<2>(*attribute));" << endl;
+          }
+          else {
+            throw runtime_error("Unknown data type: " + type);
+          }
           os << "\t}" << endl;
           os << "\telse {" << endl;
-          os << "\t\t" << it->name << " = std::nullopt;" << endl;
+          if (it->isOptional()) {
+            os << "\t\t" << it->name << " = std::nullopt;" << endl;
+          }
+          else {
+            os << "\t\t" << it->name << " = ";
+            if ( it->cl->getClassname() == "string" ) {
+              os << "\"" << it->defaultStr << "\";" << endl;
+            }
+            else {
+              os << it->defaultStr << ";" << endl;
+            }
+          }
           os << "\t}" << endl;
-        }
-        else {
-          os << "\t" << it->name << " = std::get<2>(*getAttributeByName(\"" << it->name << "\"));" << endl;
         }
       }
 

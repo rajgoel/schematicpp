@@ -50,27 +50,18 @@ public:\
 };
 
 GENERATE_BUILTIN(StringClass, "string", "std::string")
-
-GENERATE_BUILTIN(ByteClass, "byte", "char")
-GENERATE_BUILTIN(UnsignedByteClass, "unsignedByte", "unsigned char")
-GENERATE_BUILTIN(ShortClass, "short", "short")
-GENERATE_BUILTIN(UnsignedShortClass, "unsignedShort", "unsigned short")
-GENERATE_BUILTIN(IntClass, "int", "int")
-GENERATE_BUILTIN(UnsignedIntClass, "unsignedInt", "unsigned int")
-GENERATE_BUILTIN(LongClass, "long", "long long")
-GENERATE_BUILTIN(UnsignedLongClass, "unsignedLong", "unsigned long long")
-GENERATE_BUILTIN(FloatClass, "float", "float")
-GENERATE_BUILTIN(DoubleClass, "double", "double")
+GENERATE_BUILTIN(IntegerClass, "integer", "int")
+GENERATE_BUILTIN(DecimalClass, "decimal", "double")
 GENERATE_BUILTIN(BooleanClass, "boolean", "bool")
 
 //aliases
-GENERATE_BUILTIN_ALIAS(IntegerClass, IntClass, "integer")
-GENERATE_BUILTIN_ALIAS(DecimalClass, DoubleClass, "decimal")
+GENERATE_BUILTIN_ALIAS(IntClass, IntegerClass, "int")
+GENERATE_BUILTIN_ALIAS(FloatClass, DecimalClass, "float")
+GENERATE_BUILTIN_ALIAS(DoubleClass, DecimalClass, "double")
 GENERATE_BUILTIN_ALIAS(AnyURIClass, StringClass, "anyURI")
 GENERATE_BUILTIN_ALIAS(TimeClass, StringClass, "time")
 GENERATE_BUILTIN_ALIAS(DateClass, StringClass, "date")
 GENERATE_BUILTIN_ALIAS(DateTimeClass, StringClass, "dateTime")
-GENERATE_BUILTIN_ALIAS(LanguageClass, StringClass, "language")
 GENERATE_BUILTIN_ALIAS(QualifiedNameClass, StringClass, "QName")
 GENERATE_BUILTIN_ALIAS(IdClass, StringClass, "ID")
 GENERATE_BUILTIN_ALIAS(IdRefClass, StringClass, "IDREF")

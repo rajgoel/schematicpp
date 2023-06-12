@@ -450,17 +450,16 @@ static void parseComplexType(DOMElement *element, FullName fullName, Class *cl) 
                 optional = true;
             }
 
-// TODO
-/*
-            XercesString defaultStr;
+            std::string defaultStr;
             //check for default value
             if (child->hasAttribute(XercesString("default"))) {
                 defaultStr =  XercesString(child->getAttribute(XercesString("default")));
             }
-*/
+
             Class::Member info;
             info.name = attributeName;
             info.type = type;
+            info.defaultStr = defaultStr;
             info.isAttribute = true;
             info.minOccurs = optional ? 0 : 1;
             info.maxOccurs = 1;
@@ -799,15 +798,8 @@ int main_wrapper(int argc, char** argv) {
         nsLUT["xsl"] = XSL;
         nsLUT["xsd"] = XSL;
 
-        addClass(new ByteClass);
-        addClass(new UnsignedByteClass);
-        addClass(new ShortClass);
-        addClass(new UnsignedShortClass);
         addClass(new IntClass);
-        addClass(new UnsignedIntClass);
         addClass(new IntegerClass);
-        addClass(new LongClass);
-        addClass(new UnsignedLongClass);
         addClass(new StringClass);
         addClass(new AnyURIClass);
         addClass(new FloatClass);
@@ -817,7 +809,6 @@ int main_wrapper(int argc, char** argv) {
         addClass(new DateClass);
         addClass(new DateTimeClass);
         addClass(new BooleanClass);
-        addClass(new LanguageClass);
         addClass(new QualifiedNameClass);
         addClass(new IdClass);
         addClass(new IdRefClass);
