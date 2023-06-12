@@ -371,34 +371,4 @@ bool Class::Member::isRequired() const {
     return !isArray() && !isOptional();
 }
 
-std::list<Class::Member> Class::getElements(bool includeBase, bool vectors, bool optionals) const {
-    std::list<Member> ret;
-
-    if (includeBase && base) {
-        ret = base->getElements(true, vectors, optionals);
-    }
-
-    //regard the contents of a complexType with simpleContents as a required
-    //element named "content" since we already have that as an element
-    //check isBuiltIn() else we end up adding "content" more than once
-    if (base && base->isSimple() && base->isBuiltIn()) {
-        Member contentMember;
-        contentMember.name = "content";
-        contentMember.cl = base;
-        contentMember.minOccurs = contentMember.maxOccurs = 1;
-
-        ret.push_back(contentMember);
-    }
-
-    for (std::list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
-        if ( it->cl &&
-             (it->isRequired() || (it->isArray() && vectors) || (it->isOptional() && optionals))
-        ) {
-            ret.push_back(*it);
-        }
-    }
-
-    return ret;
-}
-
 

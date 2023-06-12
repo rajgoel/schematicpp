@@ -116,14 +116,6 @@ public:
     std::set<std::string> getIncludedClasses() const;
     std::set<std::string> getPrototypeClasses() const;
 
-    /**
-     * Returns a list of the required elements of this Class.
-     * Also include vector elements if vectors == true.
-     * Also include optional elements if optionals == true.
-     * Also includes those of its base if includingBase == true.
-     */
-    std::list<Member> getElements(bool includeBase, bool vectors, bool optionals) const;
-
     void writeImplementation(std::ostream& os) const;
     void writeHeader(std::ostream& os) const;
 };
