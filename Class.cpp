@@ -138,10 +138,20 @@ void Class::writeImplementation(ostream& os) const {
           continue;
         }
 
-        os << endl;
+        os << "\n\t// " << it->name << " (" << it->cl->getClassname() << ")" << endl;
 
         if (it->isArray()) {
           os << "\t" << it->name << " = getChildren<" << it->cl->getClassname() << ">();" << endl;
+        }
+        else if (!it->isAttribute && it->isOptional() ) {
+          os << "\tif ( vector<" << it->cl->getClassname() << "*> children = getChildren<" << it->cl->getClassname() << ">(); children.size() ) {" << endl;
+            os << "\t\t" << it->name << " = *children[0];" << endl;
+          os << "\t}" << endl;
+          os << "\telse {" << endl;
+          if (it->isOptional()) {
+            os << "\t\t" << it->name << " = std::nullopt;" << endl;
+          }
+          os << "\t}" << endl;
         }
         else if (it->isAttribute) {
           if ( !it->cl->isSimple() ) {
@@ -149,47 +159,44 @@ void Class::writeImplementation(ostream& os) const {
           }
           std::string type = it->cl->isBuiltIn() ? it->cl->getClassname() : it->cl->base->getClassname();
  
-          std::string attribute = "getAttributeByName(\"" + it->name + "\")";
-          if (it->isOptional() || !it->defaultStr.empty() ) {
-            os << "\tif ( Attribute* attribute = " << attribute << "; attribute != nullptr ) {" << endl << "\t"; 
-            attribute = "attribute";
-          }
+          os << "\tif ( Attribute* attribute = getAttributeByName(\"" + it->name + "\"); attribute != nullptr ) {" << endl << "\t"; 
 
 
           os  << "\t" << it->name << " = ";
           if ( type == "std::string" ) {
-            os << "std::get<2>(*" << attribute << ");" << endl;
+            os << "std::get<2>(*attribute);" << endl;
           }
           else if ( type == "bool" ) {
-            os << "(std::get<2>(*" << attribute << ") == \"true\");" << endl;
+            os << "(std::get<2>(*attribute) == \"true\");" << endl;
           }
           else if ( type == "int" ) {
-            os << "std::stoi(std::get<2>(*" << attribute << "));" << endl;
+            os << "std::stoi(std::get<2>(*attribute));" << endl;
           }
           else if ( type == "double" ) {
-            os << "std::stod(std::get<2>(*" << attribute << "));";
+            os << "std::stod(std::get<2>(*attribute));";
           }
           else {
             throw runtime_error("Unknown data type: " + type);
           }
 
-          if (it->isOptional() || !it->defaultStr.empty() ) {
-            os << "\t}" << endl;
-            os << "\telse {" << endl;
-            if (it->isOptional()) {
-              os << "\t\t" << it->name << " = std::nullopt;" << endl;
-            }
-            else if ( !it->defaultStr.empty() ) {
-              os << "\t\t" << it->name << " = ";
-              if ( type == "std::string" ) {
-                os << "\"" << it->defaultStr << "\";" << endl;
-              }
-              else {
-                os << it->defaultStr << ";" << endl;
-              }
-            }
-            os << "\t}" << endl;
+          os << "\t}" << endl;
+          os << "\telse {" << endl;
+          if (it->isOptional()) {
+            os << "\t\t" << it->name << " = std::nullopt;" << endl;
           }
+          else if ( !it->defaultStr.empty() ) {
+            os << "\t\t" << it->name << " = ";
+            if ( type == "std::string" ) {
+              os << "\"" << it->defaultStr << "\";" << endl;
+            }
+            else {
+              os << it->defaultStr << ";" << endl;
+            }
+          }
+          else {
+            os << "\t\tthrow runtime_error(\"Attribute '" << it->name << "' must be provided for '" << className << "'\");" << endl;
+          }
+          os << "\t}" << endl;
         }
       }
 
