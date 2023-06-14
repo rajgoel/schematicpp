@@ -544,7 +544,6 @@ static void parseElement(DOMElement *element, string tns) {
         } else {
             // if element only names a type and doesn't have and children, don't add it
             if ( element->getChildElementCount() == 0 ) return;
-
             type = toFullName(XercesString(element->getAttribute(XercesString("type"))), tns);
         }
 
@@ -569,7 +568,6 @@ static void parseElement(DOMElement *element, string tns) {
     }
 }
 
-
 //sets the Class::Member::cl pointer for each member in each class in classMap
 static void resolveMemberRefs(map<FullName, Class*>& classMap) {
     for (map<FullName, Class*>::iterator it = classMap.begin(); it != classMap.end(); it++) {
@@ -578,7 +576,6 @@ static void resolveMemberRefs(map<FullName, Class*>& classMap) {
                 it2->cl = NULL;
                 continue;
             }
-
             map<FullName, Class*>::iterator classIt = classes.find(it2->type);
             // ignore namespace and search again
             if (classIt == classes.end()) {
@@ -662,12 +659,11 @@ static void work(string outputDir, const vector<string>& schemaNames) {
         if (it->second->hasBase()) {
             map<FullName, Class*>::iterator classIt = classes.find(it->second->baseType);
             // ignore namespace and search again
-            if (it->second->baseType.second != "" && classIt == classes.end()) {
+            if (classIt == classes.end()) {
               for (classIt = classes.begin(); classIt != classes.end(); classIt++) {
                   if (it->second->baseType.second == classIt->first.second) break;
               }
             }
-
             if (classIt == classes.end()) {
                 throw runtime_error("Undefined base type '" + it->second->baseType.first + ":" + it->second->baseType.second + "' of '" + it->second->name.first + ":" + it->second->name.second + "'");
             }
