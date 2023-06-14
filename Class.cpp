@@ -120,83 +120,74 @@ void Class::writeImplementation(ostream& os) const {
 
     os << "#include \"" << className << ".h\"" << endl;
     os << endl;
+    os << "using namespace XML;" << endl;
+    os << endl;
 
     if (!isSimple()) {
-      os << className << "::" << className << "(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent)";
+      os << className << "::" << className << "(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent) :" << endl;
       if (base) {
-        os << " : " << base->getClassname() << "(className, element, parent)";
+        os << "\t" << base->getClassname() << "(className, element, parent)" << endl;
       }
       else {
-        os << " : XMLObject(className, element, parent)";
+        os << "\tXMLObject(className, element, parent)" << endl;
+      }
+      //member initialization
+      for (list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
+        if (!it->cl) {
+          continue;
+        }
+
+        if ( it->isAttribute ) {
+          if (it->isOptional() ) {
+            os << "\t, " << it->name << "(std::nullopt) // use placeholder because defaults are not available yet" << endl;
+          }
+          else {
+            os << "\t, " << it->name << "(_attribute_) // use placeholder because defaults are not available yet" << endl;
+          }
+        }
+        else {
+          if (it->isArray()) {
+            os << "\t, " << it->name << "(getChildren<" << it->cl->getClassname() << ">())" << endl;
+          }
+          else if (it->isOptional() ) {
+            os << "\t, " << it->name << "(getOptionalChild<" << it->cl->getClassname() << ">())" << endl;
+          }
+          else {
+            os << "\t, " << it->name << "(getRequiredChild<" << it->cl->getClassname() << ">())" << endl;
+          }
+        }
       }
       os << "{" << endl;
 
-      //members
+      os << "\t// add defaults for missing attributes" << endl;
+      os << "\tfor ( auto& defaultAttribute : defaults ) {" << endl;
+//      os << "\t\tif ( getOptionalAttributeByName(defaultAttribute.name) == std::nullopt ) {" << endl;
+      os << "\t\tif ( !getOptionalAttributeByName(defaultAttribute.name) ) {" << endl;
+      os << "\t\t\tattributes.push_back(defaultAttribute);" << endl;
+      os << "\t\t}" << endl;
+      os << "\t}" << endl;
+      os << endl;
+
+      os << "\t// set references for attribute members" << endl;
+      //member manipulation
       for (list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
         //elements of unknown types are ignored
         if (!it->cl) {
           continue;
         }
 
-        os << "\n\t// " << it->name << " (" << it->cl->getClassname() << ")" << endl;
+//        os << "\n\t// " << it->name << " (" << it->cl->getClassname() << ")" << endl;
 
-        if (it->isArray()) {
-          os << "\t" << it->name << " = getChildren<" << it->cl->getClassname() << ">();" << endl;
-        }
-        else if (!it->isAttribute && it->isOptional() ) {
-          os << "\tif ( vector<" << it->cl->getClassname() << "*> children = getChildren<" << it->cl->getClassname() << ">(); children.size() ) {" << endl;
-            os << "\t\t" << it->name << " = *children[0];" << endl;
-          os << "\t}" << endl;
-          os << "\telse {" << endl;
-          if (it->isOptional()) {
-            os << "\t\t" << it->name << " = std::nullopt;" << endl;
-          }
-          os << "\t}" << endl;
-        }
-        else if (it->isAttribute) {
+        if (it->isAttribute) {
           if ( !it->cl->isSimple() ) {
             throw runtime_error("Complex data type illegal for attribute: " + it->cl->getClassname());
           }
-          std::string type = it->cl->isBuiltIn() ? it->cl->getClassname() : it->cl->base->getClassname();
- 
-          os << "\tif ( Attribute* attribute = getAttributeByName(\"" + it->name + "\"); attribute != nullptr ) {" << endl << "\t"; 
-
-
-          os  << "\t" << it->name << " = ";
-          if ( type == "std::string" ) {
-            os << "std::get<2>(*attribute);" << endl;
-          }
-          else if ( type == "bool" ) {
-            os << "(std::get<2>(*attribute) == \"true\");" << endl;
-          }
-          else if ( type == "int" ) {
-            os << "std::stoi(std::get<2>(*attribute));" << endl;
-          }
-          else if ( type == "double" ) {
-            os << "std::stod(std::get<2>(*attribute));";
-          }
-          else {
-            throw runtime_error("Unknown data type: " + type);
-          }
-
-          os << "\t}" << endl;
-          os << "\telse {" << endl;
           if (it->isOptional()) {
-            os << "\t\t" << it->name << " = std::nullopt;" << endl;
-          }
-          else if ( !it->defaultStr.empty() ) {
-            os << "\t\t" << it->name << " = ";
-            if ( type == "std::string" ) {
-              os << "\"" << it->defaultStr << "\";" << endl;
-            }
-            else {
-              os << it->defaultStr << ";" << endl;
-            }
+            os << "\t" << it->name << " = getOptionalAttributeByName(\"" << it->name << "\");" << endl;
           }
           else {
-            os << "\t\tthrow runtime_error(\"Attribute '" << it->name << "' must be provided for '" << className << "'\");" << endl;
+            os << "\t" << it->name << " = getRequiredAttributeByName(\"" << it->name << "\");" << endl;
           }
-          os << "\t}" << endl;
         }
       }
 
@@ -242,21 +233,11 @@ void Class::writeHeader(ostream& os) const {
     os << "#include <vector>" << endl;
     os << endl;
     os << "#include \"XMLObject.h\"" << endl;
-    os << endl;
-    os << "namespace XML {" << endl;
 
-/*
-    if (isDocument) {
-        os << "#include <istream>" << endl;
-    }
-
-    os << "#include <xercesc/util/XercesDefs.hpp>" << endl;
-    os << "XERCES_CPP_NAMESPACE_BEGIN class DOMElement; XERCES_CPP_NAMESPACE_END" << endl;
-*/
-    
     //simple types only need a typedef
     if (isSimple()) {
-        os << "typedef " << base->getClassname() << " " << name.second << ";" << endl;
+      os << endl;
+      os << "typedef " << base->getClassname() << " " << name.second << ";" << endl;
     } else {
         if (base && base->hasHeader()) {
             os << "#include " << getBaseHeader() << endl;
@@ -270,6 +251,10 @@ void Class::writeHeader(ostream& os) const {
             os << "#include \"" << *it << ".h\"" << endl;
         }
 
+        os << endl;
+        os << "using namespace std;" << endl;
+        os << endl;
+        os << "namespace XML {" << endl;
         os << endl;
 
         set<string> classesToPrototype = getPrototypeClasses();
@@ -297,11 +282,11 @@ void Class::writeHeader(ostream& os) const {
         os << "private:" << endl;
 
         os << "\tstatic bool registerClass() {" << endl;
-        os << "\t\tXMLObject::factory[\"" << className << "\"] = &createInstance<" << className << ">; /// register function in factory" << endl;
+        os << "\t\tXMLObject::factory[\"" << className << "\"] = &createInstance<" << className << ">; // register function in factory" << endl;
         os << "\t\treturn true;" << endl;
         os << "\t};" << endl;
         os << "\tinline static bool registered = registerClass();" << endl;
-
+        os << "protected:" << endl;
         os << "\t" << className << "(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent);" << endl;
         os << endl;
 
@@ -316,6 +301,22 @@ void Class::writeHeader(ostream& os) const {
 
         os << "public:" << endl;
 
+        os << "\t/// default attributes to be used if they are not explicitly provided" << endl;
+        os << "\tinline static const vector<Attribute> defaults = {";
+        bool first = true;
+        for (list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
+          if ( !it->defaultStr.empty() ) {
+            if (!first) os << ",";
+            os << endl;
+            os << "\t\t{.name = \"" << it->name  << "\", .value = \"" << it->defaultStr << "\"}";
+            first = false; 
+          }
+        }
+        os << endl;
+        os << "\t};" << endl; 
+        os << endl;
+
+
         //simpleContent
         if (base && base->isSimple()) {
             os << "\t" << base->getClassname() << " content;" << endl;
@@ -323,6 +324,11 @@ void Class::writeHeader(ostream& os) const {
 
         //members
         for (list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
+            if (!it->cl) {
+              os << "\t//" << it->name << " (" << it->type.first << ":" << it->type.second << ") is undefined" << endl;
+              continue;
+            }
+
             os << "\t";
 
             //elements of unknown types are shown commented out
@@ -330,46 +336,31 @@ void Class::writeHeader(ostream& os) const {
                 os << "//";
             }
 
-            if (it->isOptional()) {
-                os << "std::optional<";
-            }
-            else if (it->isArray()) {
-                os << "std::vector<";
-            }
-
-            if (it->cl) {
-                os << it->cl->getClassname() << "&";
-            }
-            else {
-                os << it->type.second;
-            }
-
-            if (it->isOptional() || it->isArray()) {
-                os << ">";
-            }
-
-            os << " " << it->name << ";";
-
-            if ( !it->defaultStr.empty() ) {
-              os << " // default: ";
-              std::string type = it->cl->isBuiltIn() ? it->cl->getClassname() : it->cl->base->getClassname();
-              if ( type == "std::string" ) {
-                os << "\"" << it->defaultStr << "\"";
+            if ( it->isAttribute ) {
+				      if (it->isOptional()) {
+                os << "optional< reference_wrapper<Attribute> > " << it->name << "; ";
               }
               else {
-                os << it->defaultStr;
+                os << "Attribute& " << it->name << "; ";
+              }
+              os << "///< Attribute value can be expected to be of type '" << (it->cl->isBuiltIn() ? it->cl->getClassname() : it->cl->base->getClassname()) << "'" << endl;
+            }
+            else {
+              if (it->isArray()) {
+                os << "vector< reference_wrapper<" << it->cl->getClassname() << "> > " << it->name << ";" << endl;
+              }
+              else if (it->isOptional()) {
+                os << "optional< reference_wrapper<" << it->cl->getClassname() << "> > " << it->name << ";" << endl;
+              }
+							else {
+                os << it->cl->getClassname() << "& " << it->name << ";" << endl;
               }
             }
-
-            if (!it->cl) {
-                os << "\t//" << it->type.first << ":" << it->type.second << " is undefined";
-            }
-
-            os << endl;
         }
 
         os << "};" << endl;
         os << endl;
+        os << "} // namespace XML" << endl;
 
         //include classes that we prototyped earlier
         for (set<string>::const_iterator it = classesToPrototype.begin(); it != classesToPrototype.end(); it++) {
@@ -381,7 +372,6 @@ void Class::writeHeader(ostream& os) const {
         }
     }
 
-    os << "} // namespace XML" << endl;
     os << endl;
     os << "#endif // XML_" << className << "_H" << endl;
 }

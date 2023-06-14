@@ -106,33 +106,30 @@ XMLObject::XMLObject(const ClassName& className, const xercesc::DOMElement* elem
 
 }
 
-Attribute* XMLObject::getAttributeByName(const AttributeName& attributeName) {
+Attribute& XMLObject::getRequiredAttributeByName(const AttributeName& attributeName) {
   auto it = std::find_if(attributes.begin(), attributes.end(), 
-                         [attributeName](Attribute& attribute) { return std::get<1>(attribute) == attributeName; }
+                         [attributeName](Attribute& attribute) { return attribute.name == attributeName; }
   );
   if (it != attributes.end()) {
-    return &*it;
+    return *it;
   }
-  return nullptr;
+  throw std::runtime_error("Failed to get required attribute '" +  attributeName + "' of element '" + elementName + "'");
 }
 
-std::vector<XMLObject*> XMLObject::getChildrenByName(const ElementName& elementName) {
-  std::vector<XMLObject*> result;
-  for ( auto& child : children ) {
-    if ( child->elementName == elementName ) {
-      result.push_back(child.get());
-    }
+std::optional< std::reference_wrapper<Attribute> > XMLObject::getOptionalAttributeByName(const AttributeName& attributeName) {
+  auto it = std::find_if(attributes.begin(), attributes.end(), 
+                         [attributeName](Attribute& attribute) { return attribute.name == attributeName; }
+  );
+  if (it != attributes.end()) {
+    return *it;
   }
-
-  return result;
+  return std::nullopt;
 }
-
-
 
 std::string XMLObject::stringify() const {
   std::string xmlString = std::string("<") + (!prefix.empty() ? prefix + ":" : "") + elementName;
-  for ( auto& [attributePrefix, attributeName, attributeValue] : attributes ) {
-    xmlString += std::string(" ") + (!attributePrefix.empty() ? attributePrefix + ":" : "") + attributeName + "=\"" + attributeValue +"\""; 
+  for ( auto& attribute : attributes ) {
+    xmlString += std::string(" ") + (!attribute.prefix.empty() ? attribute.prefix + ":" : "") + attribute.name + "=\"" + attribute.value +"\""; 
   }
   xmlString += ">";
 

@@ -15,7 +15,19 @@ typedef std::string ElementName;
 typedef std::string Namespace;
 typedef std::string AttributeName;
 typedef std::string AttributeValue;
-typedef std::tuple<Namespace,AttributeName,AttributeValue> Attribute;
+struct Attribute {
+  Namespace prefix;
+  AttributeName name;
+  AttributeValue value;
+  operator std::string() const { return value; };
+  operator bool() const { return (value == "true"); };
+  operator int() const { return std::stoi(value); };
+  operator double() const  { return std::stod(value); };
+  Attribute& operator=(const std::string& s) { value = s; return *this; };
+  Attribute& operator=(const bool& b) { value = (b ? "true" : "false"); return *this; };
+  Attribute& operator=(const int& i) { value = std::to_string(i); return *this; };
+  Attribute& operator=(const double& d) { value = std::to_string(d); return *this; };
+};
 
 class XMLObject;
 
@@ -36,7 +48,7 @@ typedef std::unordered_map<ElementName, XMLObject* (*)(const ClassName& classNam
  * - className: refers to the class it belong to
  * - elementName: refers to the name used in the XML
  * - prefix (optional): refers to the namespace prefix in the XML (or empty if no namespace is given): 
- * - attributes: a list of tuples containing the namespace prefix, the attribute name, and the attribute value
+ * - attributes: a list of attributes containing the namespace prefix, the attribute name, and the attribute value
  * - children: a list of child elements
  * - parent: a pointer to the parent element (or nullptr is root element) 
  *
@@ -63,7 +75,7 @@ protected:
   XMLObject(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent);
 
   inline static Factory factory;
-
+  inline static Attribute _attribute_; ///> placeholder to be used for temporary initialization of references
 public:
   template<typename T> bool is() {
     return ( dynamic_cast<T*>(this) != nullptr );
@@ -84,49 +96,46 @@ public:
   const ClassName className;
 
   XMLObject* parent;
-  std::vector<Attribute> attributes;
-  std::vector<std::unique_ptr<XMLObject>> children;
+  std::vector<std::unique_ptr<XMLObject>> children; ///< child nodes of the XML element
+  std::vector<Attribute> attributes; /// attributes of the XML element
 
   std::string stringify() const;
-  Attribute* getAttributeByName(const AttributeName& attributeName);
-  std::vector<XMLObject*> getChildrenByName(const ElementName& elementName);
-  template<typename T> std::vector<T*> getChildren() {
-    std::vector<T*> result;
+
+  template<typename T> T& getRequiredChild() {
     for ( auto& child : children ) {
       if ( child->is<T>() ) {
-        result.push_back(child->get<T>());
+        return *child->get<T>();
+      }
+    }
+    throw std::runtime_error("Failed to get required child of element '" + elementName + "'");
+  }
+
+  template<typename T> std::optional< std::reference_wrapper<T> > getOptionalChild() {
+    for ( auto& child : children ) {
+      if ( child->is<T>() ) {
+        return *child->get<T>();
+      }
+    }
+    return std::nullopt;
+  }
+
+  template<typename T> std::vector< std::reference_wrapper<T> > getChildren() {
+    std::vector< std::reference_wrapper<T> > result;
+    for ( auto& child : children ) {
+      if ( child->is<T>() ) {
+        result.push_back(*child->get<T>());
       }
     }
     return result;
   }
 
+  Attribute& getRequiredAttributeByName(const AttributeName& attributeName);
+  std::optional< std::reference_wrapper<Attribute> > getOptionalAttributeByName(const AttributeName& attributeName);
+
 
 };
 
 std::ostream& operator<< (std::ostream& os, const XMLObject* obj);
-
-
-////////////////////////////////////////
-
-class DerivedXMLObject : public XMLObject {
-
-template<typename T> friend XMLObject* createInstance(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent); 
-
-private:
-  static bool registerClass() {
-//    std::cout <<"Init-DerivedXMLObject\n";
-    XMLObject::factory["DerivedXMLObject"] = &createInstance<DerivedXMLObject>; /// register function in factory
-    return true;
-  };
-  inline static bool registered = registerClass();
-
-  DerivedXMLObject(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent) : XMLObject(className, element, parent)
-    {
-//        std::cout <<"DerivedXMLObject constructor"<< std::endl;
-    };
-public:
-};
-
 
 } // end namespace XML
 
