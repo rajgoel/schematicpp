@@ -542,8 +542,6 @@ static void parseElement(DOMElement *element, string tns) {
             if (!strict && expectedChild == NULL) return;
             parseComplexType(expectedChild, type);
         } else {
-            // if element only names a type and doesn't have and children, don't add it
-            if ( element->getChildElementCount() == 0 ) return;
             type = toFullName(XercesString(element->getAttribute(XercesString("type"))), tns);
         }
 
