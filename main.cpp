@@ -76,10 +76,17 @@ bool strict = false;
 static std::string cmakeTargetName;
 
 static Class* addClass(Class *cl, map<FullName, Class*>& to = classes) {
-    if (to.find(cl->name) != to.end()) {
-        FullName name = cl->name;
-        delete cl;
-        throw runtime_error(name.first + ":" + name.second + " defined more than once");
+    map<FullName, Class*>::iterator it = to.find(cl->name);
+    if (it != to.end()) {
+        if ( !it->second->members.size() ) {
+            // override class without member
+            delete it->second;
+        }
+        else {
+            FullName name = cl->name;
+            delete cl;
+            throw runtime_error(name.first + ":" + name.second + " defined more than once");
+        }
     }
 
     return to[cl->name] = cl;
@@ -535,6 +542,9 @@ static void parseElement(DOMElement *element, string tns) {
             if (!strict && expectedChild == NULL) return;
             parseComplexType(expectedChild, type);
         } else {
+            // if element only names a type and doesn't have and children, don't add it
+            if ( element->getChildElementCount() == 0 ) return;
+
             type = toFullName(XercesString(element->getAttribute(XercesString("type"))), tns);
         }
 
@@ -559,19 +569,30 @@ static void parseElement(DOMElement *element, string tns) {
     }
 }
 
+
 //sets the Class::Member::cl pointer for each member in each class in classMap
 static void resolveMemberRefs(map<FullName, Class*>& classMap) {
     for (map<FullName, Class*>::iterator it = classMap.begin(); it != classMap.end(); it++) {
         for (list<Class::Member>::iterator it2 = it->second->members.begin(); it2 != it->second->members.end(); it2++) {
-            // assume same namespace if missing
-            if (it2->type.first == "") it2->type.first = it->second->name.first;
+            if ( it2->type.second == "" ) {
+                it2->cl = NULL;
+                continue;
+            }
 
-            if (classes.find(it2->type) == classes.end()) {
+            map<FullName, Class*>::iterator classIt = classes.find(it2->type);
+            // ignore namespace and search again
+            if (classIt == classes.end()) {
+              for (classIt = classes.begin(); classIt != classes.end(); classIt++) {
+                  if (it2->type.second == classIt->first.second) break;
+              }
+            }
+
+            if (classIt == classes.end()) {
                 if (it2->minOccurs > 0) {
                     if (strict) {
                         throw runtime_error("Undefined type '" + it2->type.first + ":" + it2->type.second + "' in required member '" + it2->name + "' of '" + it->first.first + ":" + it->first.second + "'");
                     }
-
+cerr << it->second->name.first << " " << it->second->name.second << " - " << it2->type.second << endl;
                     cerr << "Undefined type '" + it2->type.first + ":" + it2->type.second + "' in required member '" + it2->name + "' of '" + it->first.first + ":" + it->first.second + "'" << endl;
                 }
                 //allow members with undefined types as long as they're optional or vectors
@@ -582,7 +603,7 @@ static void resolveMemberRefs(map<FullName, Class*>& classMap) {
 
                 it2->cl = NULL;
             } else {
-                it2->cl = classes[it2->type];
+                it2->cl = classIt->second;
             }
         }
     }
@@ -639,14 +660,19 @@ static void work(string outputDir, const vector<string>& schemaNames) {
 
     for (map<FullName, Class*>::iterator it = classes.begin(); it != classes.end(); it++) {
         if (it->second->hasBase()) {
-            // assume same namespace if missing
-            if (it->second->baseType.first == "") it->second->baseType.first = it->second->name.first;
+            map<FullName, Class*>::iterator classIt = classes.find(it->second->baseType);
+            // ignore namespace and search again
+            if (it->second->baseType.second != "" && classIt == classes.end()) {
+              for (classIt = classes.begin(); classIt != classes.end(); classIt++) {
+                  if (it->second->baseType.second == classIt->first.second) break;
+              }
+            }
 
-            if (classes.find(it->second->baseType) == classes.end()) {
+            if (classIt == classes.end()) {
                 throw runtime_error("Undefined base type '" + it->second->baseType.first + ":" + it->second->baseType.second + "' of '" + it->second->name.first + ":" + it->second->name.second + "'");
             }
 
-            it->second->base = classes[it->second->baseType];
+            it->second->base = classIt->second;
         } else if (it->second->isDocument) {
             throw runtime_error("Document without base type!");
         }
