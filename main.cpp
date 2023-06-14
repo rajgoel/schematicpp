@@ -444,10 +444,10 @@ static void parseComplexType(DOMElement *element, FullName fullName, Class *cl) 
 
             FullName type = toFullName(XercesString(child->getAttribute(XercesString("type"))));
 
-            bool optional = false;
+            bool optional = true;
             //check for optional use
-            if (child->hasAttribute(XercesString("use")) && XercesString(child->getAttribute(XercesString("use"))) == "optional") {
-                optional = true;
+            if (child->hasAttribute(XercesString("use")) && XercesString(child->getAttribute(XercesString("use"))) == "required") {
+                optional = false;
             }
 
             std::string defaultStr;
