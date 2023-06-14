@@ -358,9 +358,10 @@ static void parseSequence(DOMElement *parent, DOMElement *sequence, Class *cl, b
 
             cl->addMember(info);
         } else if(child->hasAttribute(refStr)) {
+            FullName fullName = toFullName(XercesString(child->getAttribute(refStr)));
             Class::Member info;
-            info.name = XercesString(child->getAttribute(refStr));
-            info.type = types[XercesString(child->getAttribute(refStr))];
+            info.name = fullName.second;
+            info.type = types[info.name];
             info.minOccurs = minOccurs;
             info.maxOccurs = maxOccurs;
             info.isAttribute = false;
@@ -570,10 +571,6 @@ static void parseElement(DOMElement *element, string tns) {
 static void resolveMemberRefs(map<FullName, Class*>& classMap) {
     for (map<FullName, Class*>::iterator it = classMap.begin(); it != classMap.end(); it++) {
         for (list<Class::Member>::iterator it2 = it->second->members.begin(); it2 != it->second->members.end(); it2++) {
-            if ( it2->type.second == "" ) {
-                it2->cl = NULL;
-                continue;
-            }
             map<FullName, Class*>::iterator classIt = classes.find(it2->type);
             // ignore namespace and search again
             if (classIt == classes.end()) {
