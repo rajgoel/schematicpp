@@ -362,6 +362,7 @@ static void parseSequence(DOMElement *parent, DOMElement *sequence, Class *cl, b
             Class::Member info;
             info.name = fullName.second;
             info.type = types[info.name];
+            if ( info.name == info.type.second ) info.name += "_";
             info.minOccurs = minOccurs;
             info.maxOccurs = maxOccurs;
             info.isAttribute = false;
