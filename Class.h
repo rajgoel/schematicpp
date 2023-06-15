@@ -1,5 +1,4 @@
 /*
- * File:   main.cpp
  * Authors: Asvin Goel (rajgoel), Tomas Härdin (tjoppen)
  *
  * Forked from: https://github.com/Tjoppen/james (June 6, 2023)
@@ -19,8 +18,8 @@
  * limitations under the License.
  */
 
-#ifndef _CLASS_H
-#define _CLASS_H
+#ifndef SCHEMATICPP_CLASS_H
+#define SCHEMATICPP_CLASS_H
 
 #include <string>
 #include <map>
@@ -29,24 +28,18 @@
 #include <limits.h>
 
 #define UNBOUNDED INT_MAX
+#define XSL "http://www.w3.org/2001/XMLSchema"
 
 typedef std::string NamespaceName;
 typedef std::string ClassName;
 typedef std::pair<NamespaceName, ClassName> FullName;
-
-extern const std::string variablePostfix;
-
-//commonly used temp variable names
-extern const std::string nodeWithPostfix;       //"node" + variablePostfix
-extern const std::string tempWithPostfix;       //"temp" + variablePostfix
-extern const std::string convertedWithPostfix;  //"converted" + variablePostfix
-extern const std::string ssWithPostfix;         //"ss" + variablePostfix
 
 class Class {
 public:
     class Member {
     public:
         std::string name;
+        std::string cppName;
         FullName type;
         Class *cl;          //NULL is class is unknown (only allowed for optionals and vectors)
         std::string defaultStr;
@@ -55,14 +48,42 @@ public:
         bool isAttribute;   //true if this member is an attribute rather than an element
         bool isArray() const;
         bool isOptional() const;    //returns true if this member is optional (not an array)
-        bool isRequired() const;
     };
 
 private:
     //classes that we should friend so they can access our default constructor
     std::set<std::string> friends;
 
+    //set of C++ keywords
+    static std::set<std::string> keywordSet;
+
 public:
+    static std::string sanitize(std::string str) {
+      //strip any bad characters such as dots, colons, semicolons..
+      std::string ret;
+
+      for (size_t x = 0; x < str.size(); x++) {
+        char c = str[x];
+
+        if ((c >= 'a' && c <= 'z') ||
+                (c >= '0' && c <= '9') ||
+                (c >= 'A' && c <= 'Z') ||
+                c == '_') {
+            ret += c;
+        }
+        else {
+            ret += "_";
+        }
+      }
+
+      //check if identifier is a reserved C++ keyword, and append an underscore if so
+      if (keywordSet.find(ret) != keywordSet.end()) {
+        ret += "_";
+      }
+
+      return ret;
+    }
+
     enum ClassType {
         SIMPLE_TYPE,
         COMPLEX_TYPE,
@@ -72,6 +93,7 @@ public:
     virtual bool isBuiltIn() const;
 
     const FullName name;
+    const std::string cppName;
     const ClassType type;
 
     bool isDocument;            //true if this is a document class
@@ -98,9 +120,14 @@ public:
     void doPostResolveInit();
 
     /**
-     * Should return the name with which to refer to this Class.
+     * Returns the name with which to refer to this class.
      */
     virtual std::string getClassname() const;
+
+    /**
+     * Returns the sanitized name which to use in the generated code.
+     */
+    virtual std::string getCppClassname() const;
 
     /**
      * Returns name of header wherein the base class is defined.
@@ -112,9 +139,6 @@ public:
      * Examples include normal complex types and certain built-in types like std::string.
      */
     virtual bool hasHeader() const;
-
-    std::set<std::string> getIncludedClasses() const;
-    std::set<std::string> getPrototypeClasses() const;
 
     void writeImplementation(std::ostream& os) const;
     void writeHeader(std::ostream& os) const;

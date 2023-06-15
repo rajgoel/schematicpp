@@ -1,5 +1,4 @@
 /*
- * File:   main.cpp
  * Authors: Asvin Goel (rajgoel), Tomas Härdin (tjoppen)
  *
  * Forked from: https://github.com/Tjoppen/james (June 6, 2023)
@@ -22,7 +21,6 @@
 #include <stdexcept>
 #include <sstream>
 #include "BuiltInClasses.h"
-#include "main.h"
 
 using namespace std;
 

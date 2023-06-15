@@ -39,7 +39,8 @@
  #include <unistd.h>
 #endif
 
-#include "main.h"
+#define CHECK(a) if(!a) throw runtime_error(#a " == NULL")
+
 #include "XercesString.h"
 #include "Class.h"
 #include "BuiltInClasses.h"
@@ -92,121 +93,6 @@ static Class* addClass(Class *cl, map<FullName, Class*>& to = classes) {
     return to[cl->name] = cl;
 }
 
-//set of C++ keywords. initialized by initKeywordSet()
-set<string> keywordSet;
-
-//raw list of C++ keywords
-const char *keywords[] = {
-    "and",
-    "and_eq",
-    "asm",
-    "auto",
-    "bitand",
-    "bitor",
-    "bool",
-    "break",
-    "case",
-    "catch",
-    "char",
-    "class",
-    "compl",
-    "const",
-    "const_cast",
-    "continue",
-    "default",
-    "delete",
-    "do",
-    "double",
-    "dynamic_cast",
-    "else",
-    "enum",
-    "explicit",
-    "export",
-    "extern",
-    "false",
-    "float",
-    "for",
-    "friend",
-    "goto",
-    "if",
-    "inline",
-    "int",
-    "long",
-    "mutable",
-    "namespace",
-    "new",
-    "not",
-    "not_eq",
-    "operator",
-    "or",
-    "or_eq",
-    "private",
-    "protected",
-    "public",
-    "register",
-    "reinterpret_cast",
-    "return",
-    "short",
-    "signed",
-    "sizeof",
-    "static",
-    "static_cast",
-    "struct",
-    "switch",
-    "template",
-    "this",
-    "throw",
-    "true",
-    "try",
-    "typedef",
-    "typeid",
-    "typename",
-    "union",
-    "unsigned",
-    "using",
-    "virtual",
-    "void",
-    "volatile",
-    "wchar_t",
-    "while",
-    "xor",
-    "xor_eq",
-
-    //other "keywords"
-    "content",  //complexTypes with simpleContent
-};
-
-static void initKeywordSet() {
-    //stuff keywords into keywordSet for fast lookup
-    for (size_t x = 0; x < sizeof(keywords) / sizeof(const char*); x++)
-        keywordSet.insert(keywords[x]);
-}
-
-static string fixIdentifier(string str) {
-    //strip any bad characters such as dots, colons, semicolons..
-    string ret;
-
-    for (size_t x = 0; x < str.size(); x++) {
-        char c = str[x];
-
-        if ((c >= 'a' && c <= 'z') ||
-                (c >= '0' && c <= '9') ||
-                (c >= 'A' && c <= 'Z') ||
-                c == '_') {
-            ret += c;
-        }
-        else {
-            ret += "_";
-        }
-    }
-
-    //check if identifier is a reserved C++ keyword, and append an underscore if so
-    if (keywordSet.find(ret) != keywordSet.end()) {
-        ret += "_";
-    }
-
-    return ret;
-}
 
 static string lookupNamespace(string typeName, string defaultNamespace) {
     //figures out namespace URI of given type
@@ -316,7 +202,7 @@ static void parseSequence(DOMElement *parent, DOMElement *sequence, Class *cl, b
         XercesString refStr("ref");
         XercesString minOccursStr("minOccurs");
         XercesString maxOccursStr("maxOccurs");
-        string name = fixIdentifier(XercesString(child->getAttribute(XercesString("name"))));
+        string name = XercesString(child->getAttribute(XercesString("name")));
 
         if (child->hasAttribute(minOccursStr)) {
             stringstream ss;
@@ -360,9 +246,8 @@ static void parseSequence(DOMElement *parent, DOMElement *sequence, Class *cl, b
         } else if(child->hasAttribute(refStr)) {
             FullName fullName = toFullName(XercesString(child->getAttribute(refStr)));
             Class::Member info;
-            info.name = fullName.second;
-            info.type = types[info.name];
-            if ( info.name == info.type.second ) info.name += "_";
+            info.name = Class::sanitize(XercesString(child->getAttribute(refStr)));
+            info.type = types[fullName.second];
             info.minOccurs = minOccurs;
             info.maxOccurs = maxOccurs;
             info.isAttribute = false;
@@ -449,7 +334,7 @@ static void parseComplexType(DOMElement *element, FullName fullName, Class *cl) 
                 throw runtime_error("<attribute> missing expected attribute 'name'");
             }
 
-            string attributeName = fixIdentifier(XercesString(child->getAttribute(XercesString("name"))));
+            string attributeName = XercesString(child->getAttribute(XercesString("name")));
 
             FullName type = toFullName(XercesString(child->getAttribute(XercesString("type"))));
 
@@ -808,8 +693,6 @@ int main_wrapper(int argc, char** argv) {
         }
 
         XMLPlatformUtils::Initialize();
-
-        initKeywordSet();
 
         //HACKHACK: we should handle NS lookup properly
         nsLUT["xs"] = XSL;

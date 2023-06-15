@@ -1,5 +1,4 @@
 /*
- * File:   main.cpp
  * Authors: Asvin Goel (rajgoel), Tomas Härdin (tjoppen)
  *
  * Forked from: https://github.com/Tjoppen/james (June 6, 2023)
@@ -19,8 +18,8 @@
  * limitations under the License.
  */
 
-#ifndef _BUILTINCLASSES_H
-#define _BUILTINCLASSES_H
+#ifndef SCHEMATICPP_BUILTINCLASSES_H
+#define SCHEMATICPP_BUILTINCLASSES_H
 
 #include "Class.h"
 
