@@ -6,8 +6,8 @@
  * Created on February 12, 2010, 5:43 PM
  */
 
-#ifndef _XERCESSTRING_H
-#define _XERCESSTRING_H
+#ifndef SCHEMATICPP_XERCESSTRING_H
+#define SCHEMATICPP_XERCESSTRING_H
 
 #include <xercesc/util/XercesDefs.hpp>
 #include <string>
@@ -34,5 +34,5 @@ namespace schematicpp {
 std::ostream& operator<< (std::ostream& os, const schematicpp::XercesString& str);
 std::ostream& operator<< (std::ostream& os, const XMLCh* str);
 
-#endif /* _XERCESSTRING_H */
+#endif /* SCHEMATICPP_XERCESSTRING_H */
 

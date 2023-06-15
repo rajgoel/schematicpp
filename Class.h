@@ -144,5 +144,5 @@ public:
     void writeHeader(std::ostream& os) const;
 };
 
-#endif /* _CLASS_H */
+#endif /* SCHEMATICPP_CLASS_H */
 

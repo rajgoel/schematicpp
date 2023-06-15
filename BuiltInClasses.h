@@ -64,5 +64,5 @@ GENERATE_BUILTIN_ALIAS(QualifiedNameClass, StringClass, "QName")
 GENERATE_BUILTIN_ALIAS(IdClass, StringClass, "ID")
 GENERATE_BUILTIN_ALIAS(IdRefClass, StringClass, "IDREF")
 
-#endif /* _BUILTINCLASSES_H */
+#endif /* SCHEMATICPP_BUILTINCLASSES_H */
 
