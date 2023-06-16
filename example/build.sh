@@ -6,7 +6,10 @@
 # Change to output directory
 cd BPMNParser
 
-# Build library and executable
+# Use below to build executable without library
+# g++ -std=c++20 -Wfatal-errors main.cpp classes/*.cpp  -L./lib  -lBPMN  -lxerces-c -o bpmnParser
+
+# Use below to build library and executable
 mkdir build
 cd build
 cmake -DSRC=../main.cpp -DEXE=bpmnParser ..
