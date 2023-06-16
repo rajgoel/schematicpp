@@ -318,7 +318,7 @@ bool Class::Member::isOptional() const {
     return minOccurs == 0 && maxOccurs == 1;
 }
 
-std::set<std::string> Class::keywordSet = {
+std::set<std::string_view> Class::keywordSet = {
     "and",
     "and_eq",
     "asm",

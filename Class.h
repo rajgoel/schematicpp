@@ -22,6 +22,7 @@
 #define SCHEMATICPP_CLASS_H
 
 #include <string>
+#include <string_view>
 #include <map>
 #include <list>
 #include <set>
@@ -55,7 +56,7 @@ private:
     std::set<std::string> friends;
 
     //set of C++ keywords
-    static std::set<std::string> keywordSet;
+    static std::set<std::string_view> keywordSet;
 
 public:
     static std::string sanitize(std::string str) {
