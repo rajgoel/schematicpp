@@ -728,8 +728,14 @@ string generateCMakeLists() {
     oss << "add_library(${OBJECTLIB} OBJECT ${SOURCES})" << endl;
     oss << endl;
 
-    oss << "# Set optimization flags for the target" << endl;
-    oss << "target_compile_options(${OBJECTLIB} PRIVATE -O3)" << endl;
+    oss << "# Set optimization flags for the target based on the compiler" << endl;
+    oss << "if (CMAKE_CXX_COMPILER_ID STREQUAL \"GNU\")" << endl;
+    oss << "\ttarget_compile_options(${OBJECTLIB} PRIVATE -O3)" << endl;
+    oss << "elseif (CMAKE_CXX_COMPILER_ID STREQUAL \"Clang\")" << endl;
+    oss << "\ttarget_compile_options(${OBJECTLIB} PRIVATE -O3)" << endl;
+    oss << "elseif (CMAKE_CXX_COMPILER_ID STREQUAL \"MSVC\")" << endl;
+    oss << "\ttarget_compile_options(${OBJECTLIB} PRIVATE /Ox)" << endl;
+    oss << "endif()" << endl;
     oss << endl;
 
     oss << "# Create the library" << endl;
