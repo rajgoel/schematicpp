@@ -36,9 +36,6 @@ int main(void) {
       cout << "  - " << node.className;
       if ( nodeId.has_value() ) {
         cout << " with id '" << (string)nodeId->get() << "'";
-Attribute& a= nodeId->get();
-Attribute& b = node.getOptionalAttributeByName("id")->get();
-cerr << &a << "/" << &b;
       }
       else {
         cout << " without id";

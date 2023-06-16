@@ -2,7 +2,7 @@
 #include <xercesc/parsers/XercesDOMParser.hpp>
 #include <xercesc/util/BinInputStream.hpp>
 #include <xercesc/sax/InputSource.hpp>
-#include <iostream>
+// #include <iostream>
 
 namespace XML {
 
@@ -35,34 +35,33 @@ public:
 
 
 XMLObject* XMLObject::createFromStream(std::istream& xmlStream) {
-std::cout << "Create XML object from input stream" << std::endl;
-    xercesc::XMLPlatformUtils::Initialize();
-    std::unique_ptr<xercesc::XercesDOMParser> parser = std::make_unique<xercesc::XercesDOMParser>();
-    parser->setDoNamespaces(true);
-    parser->parse(IStreamInputSource(xmlStream));
+  // std::cout << "Create XML object from input stream" << std::endl;
+  xercesc::XMLPlatformUtils::Initialize();
+  std::unique_ptr<xercesc::XercesDOMParser> parser = std::make_unique<xercesc::XercesDOMParser>();
+  parser->setDoNamespaces(true);
+  parser->parse(IStreamInputSource(xmlStream));
 
-    xercesc::DOMDocument* document = parser->getDocument();
-    if(!document) throw std::runtime_error("Failed to parse XML");
+  xercesc::DOMDocument* document = parser->getDocument();
+  if(!document) throw std::runtime_error("Failed to parse XML");
 
-    xercesc::DOMElement* rootElement = document->getDocumentElement();
-    if(!rootElement) throw std::runtime_error("Failed to get root element of XML");
+  xercesc::DOMElement* rootElement = document->getDocumentElement();
+  if(!rootElement) throw std::runtime_error("Failed to get root element of XML");
 
-    std::string rootName =  xercesc::XMLString::transcode(rootElement->getLocalName());
-std::cout << "Root: '" << rootName << "'" << std::endl;
-    XMLObject* object = createObject(rootElement, nullptr);
-    parser.reset(); // delete unique_ptr to parser before calling Terminate
-    xercesc::XMLPlatformUtils::Terminate();
-    return object;
+  std::string rootName =  xercesc::XMLString::transcode(rootElement->getLocalName());
+  XMLObject* object = createObject(rootElement, nullptr);
+  parser.reset(); // delete unique_ptr to parser before calling Terminate
+  xercesc::XMLPlatformUtils::Terminate();
+  return object;
 };
 
 XMLObject* XMLObject::createFromString(std::string& xmlString) {
-std::cout << "Create XML object from string" << std::endl;
+  // std::cout << "Create XML object from string" << std::endl;
   std::istringstream iss(xmlString);
   return createFromStream(iss);
 }
 
 XMLObject* XMLObject::createFromFile(std::string& filename) {
-std::cout << "Create XML object from file" << std::endl;
+  // std::cout << "Create XML object from file" << std::endl;
   throw std::runtime_error("Not yet implemented!");
   return nullptr;
 }
@@ -73,15 +72,11 @@ XMLObject* XMLObject::createObject(const xercesc::DOMElement* element, XMLObject
   if ( auto it = factory.find(elementName); it != factory.end() ) { 
     return it->second(elementName, element, parent); 
   }
-std::cout << "Unknown element '" << elementName << "' using 'XMLObject' instead" << std::endl;
+  // std::cout << "Unknown element '" << elementName << "' using 'XMLObject' instead" << std::endl;
   return createInstance<XMLObject>("XMLObject", element, parent);
 }
 
-XMLObject::XMLObject(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent) : XMLObject::XMLObject(className, element, parent, defaults) {}
-
 XMLObject::XMLObject(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent, const Attributes& defaultAttributes) : className(className), parent(parent) {
-
-  std::cout <<"XMLObject constructor\n";
 
   elementName = xercesc::XMLString::transcode(element->getLocalName());
   prefix = xercesc::XMLString::transcode(element->getPrefix());
@@ -99,8 +94,13 @@ XMLObject::XMLObject(const ClassName& className, const xercesc::DOMElement* elem
     AttributeValue attributeValue = xercesc::XMLString::transcode(item->getNodeValue());
     attributes.push_back( { attributePrefix, attributeName, attributeValue } );
   }
-  // add default attributes 
-  // TODO
+
+  // add defaults for missing attributes
+  for ( auto& defaultAttribute : defaultAttributes ) {
+    if ( !getOptionalAttributeByName(defaultAttribute.name) ) {
+      attributes.push_back(defaultAttribute);
+    }
+  }
 
   // set children
   for (xercesc::DOMElement *childElement = element->getFirstElementChild(); childElement; childElement = childElement->getNextElementSibling()) {

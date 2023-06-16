@@ -34,7 +34,7 @@ struct Attribute {
 typedef std::vector<Attribute> Attributes;
 typedef std::vector<std::unique_ptr<XMLObject>> Children;
 
-template<typename T> XMLObject* createInstance(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent) { return new T(className, element, parent); } /// Template function used to store in factory
+template<typename T> XMLObject* createInstance(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent) { return new T(className, element, parent, T::defaults); } /// Template function used to store in factory
 
 typedef std::unordered_map<ElementName, XMLObject* (*)(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent)> Factory; /// Factory used to create instance depending on element name
 
@@ -74,7 +74,6 @@ protected:
 template<typename T> friend XMLObject* createInstance(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent); 
 
 protected:
-  XMLObject(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent);
   XMLObject(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent, const Attributes& defaultAttributes);
 
   inline static Factory factory;

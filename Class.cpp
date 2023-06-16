@@ -122,10 +122,6 @@ void Class::writeImplementation(ostream& os) const {
     os << endl;
 
     if (!isSimple()) {
-///
-      os << getCppClassname() << "::" << getCppClassname() << "(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent) : " << getCppClassname() << "(className,element,parent,defaults) {}" << endl;
-      os << endl;
-///
       os << getCppClassname() << "::" << getCppClassname() << "(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent, const Attributes& defaultAttributes) :" << endl;
       if (base) {
         os << "\t" << base->getCppClassname() << "(className, element, parent, defaultAttributes)" << endl;
@@ -160,38 +156,6 @@ void Class::writeImplementation(ostream& os) const {
         }
       }
       os << "{" << endl;
-/*
-      os << "\t// add defaults for missing attributes" << endl;
-      os << "\tfor ( auto& defaultAttribute : defaults ) {" << endl;
-      os << "\t\tif ( !getOptionalAttributeByName(defaultAttribute.name) ) {" << endl;
-      os << "\t\t\tattributes.push_back(defaultAttribute);" << endl;
-      os << "\t\t}" << endl;
-      os << "\t}" << endl;
-      os << endl;
-*/
-
-/*
-      os << "\t// set references for attribute members" << endl;
-      //member manipulation
-      for (list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
-        //elements of unknown types are ignored
-        if (!it->cl) {
-          continue;
-        }
-
-        if (it->isAttribute) {
-          if ( !it->cl->isSimple() ) {
-            throw runtime_error("Complex data type illegal for attribute: " + it->cl->getCppClassname());
-          }
-          if (it->isOptional()) {
-            os << "\t" << it->cppName << " = getOptionalAttributeByName(\"" << it->name << "\");" << endl;
-          }
-          else {
-            os << "\t" << it->cppName << " = getRequiredAttributeByName(\"" << it->name << "\");" << endl;
-          }
-        }
-      }
-*/
       os << "}" << endl;
     }
 }
@@ -217,7 +181,6 @@ void Class::writeHeader(ostream& os) const {
         if (base && base->hasHeader()) {
             os << "#include " << getBaseHeader() << endl;
         }
-
 
         //include non-builtin member classes and non-simple member classes
         for (list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
@@ -261,7 +224,6 @@ void Class::writeHeader(ostream& os) const {
         os << "\t};" << endl;
         os << "\tinline static bool registered = registerClass();" << endl;
         os << "protected:" << endl;
-        os << "\t" << cppName << "(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent);" << endl;
         os << "\t" << cppName << "(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent, const Attributes& defaultAttributes);" << endl;
         os << endl;
 
@@ -279,27 +241,26 @@ void Class::writeHeader(ostream& os) const {
         os << "\t/// default attributes to be used if they are not explicitly provided" << endl;
         os << "\tinline static const Attributes defaults = {";
         bool first = true;
-////
+
+        // obtain all defaults including those from base classes
         const Class* c = this;
         while ( true ) {
-         for (list<Member>::const_iterator it = c->members.begin(); it != c->members.end(); it++) {
-          if ( !it->defaultStr.empty() ) {
-            if (!first) os << ",";
-            os << endl;
-            os << "\t\t{.name = \"" << it->name  << "\", .value = \"" << it->defaultStr << "\"}";
-//            if ( c != this ) os << " /* inherited */";
-            first = false; 
+          for (list<Member>::const_iterator it = c->members.begin(); it != c->members.end(); it++) {
+            if ( !it->defaultStr.empty() ) {
+              if (!first) os << ",";
+              os << endl;
+              os << "\t\t{.name = \"" << it->name  << "\", .value = \"" << it->defaultStr << "\"}";
+              first = false; 
+            }
           }
-         }
-         //
-         if ( c->base ) { 
-          c = c->base;
-         }
-         else { 
-          break;
-         }
+          if ( c->base ) { 
+            c = c->base;
+          }
+          else { 
+            break;
+          }
         }
-///
+
         os << endl;
         os << "\t};" << endl; 
         os << endl;
