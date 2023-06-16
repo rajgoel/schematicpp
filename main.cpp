@@ -52,9 +52,8 @@ using namespace xercesc;
 using namespace schematicpp;
 
 static void printUsage() {
-    cerr << "USAGE: schematicpp [-v] [-d] [-nr] [-nv] [-a] [-cmake targetname] [--dry-run] output-dir list-of-XSL-documents" << endl;
+    cerr << "USAGE: schematicpp [-v] [-cmake targetname] [--dry-run] output-dir list-of-XSL-documents" << endl;
     cerr << " -v\tVerbose mode" << endl;
-    cerr << " -s\tStrict mode - throw errors when expected child element is missing" << endl;
     cerr << " -cmake\tGenerate CMakeLists.txt with all generated .cpp files as part of a library with the specified target name" << endl;
     cerr << " --dry-run\tPerform generation but don't write anything to disk - instead does exit(1) if any file changes" << endl;
     cerr << endl;
@@ -75,7 +74,6 @@ map<FullName, Class*> classes;
 map<FullName, Class*> groups;
 
 bool verbose = false;
-bool strict = false;
 static std::string cmakeTargetName;
 
 static Class* addClass(Class *cl, map<FullName, Class*>& to = classes) {
@@ -133,10 +131,6 @@ static DOMElement *getExpectedChildElement(DOMNode *parent, string childName) {
 
             return childElement;
         }
-    }
-
-    if (strict) {
-        throw runtime_error("'" + (string)XercesString(parent->getLocalName()) + "' missing expected child element '" + childName + "'");
     }
 
     cerr << "'" + (string)XercesString(parent->getLocalName()) + "' missing expected child element '" + childName + "'" << endl;
@@ -261,7 +255,7 @@ static void parseSequence(DOMElement *parent, DOMElement *sequence, Class *cl, b
 
             //expect <complexType> sub-tag
             DOMElement *expectedChild = getExpectedChildElement(child, "complexType");
-            if (!strict && expectedChild == NULL) continue;
+            if (expectedChild == NULL) continue;
             parseComplexType(expectedChild, subName);
 
             Class::Member info;
@@ -317,7 +311,7 @@ static void parseComplexType(DOMElement *element, FullName fullName, Class *cl) 
             parseSequence(element, child, cl, true);
         } else if (name == "complexContent" || name == "simpleContent") {
             DOMElement *extension = getExpectedChildElement(child, "extension");
-            if (!strict && extension == NULL) continue;
+            if (extension == NULL) continue;
             if (!extension->hasAttribute(XercesString("base"))) {
                 throw runtime_error("Extension missing expected attribute base");
             }
@@ -427,7 +421,7 @@ static void parseElement(DOMElement *element, string tns) {
             //anonymous element type. derive it using expected <complexType>
             type = FullName(tns, fullName.second + "Type");
             DOMElement *expectedChild = getExpectedChildElement(element, "complexType");
-            if (!strict && expectedChild == NULL) return;
+            if (expectedChild == NULL) return;
             parseComplexType(expectedChild, type);
         } else {
             type = toFullName(XercesString(element->getAttribute(XercesString("type"))), tns);
@@ -468,9 +462,6 @@ static void resolveMemberRefs(map<FullName, Class*>& classMap) {
 
             if (classIt == classes.end()) {
                 if (it2->minOccurs > 0) {
-                    if (strict) {
-                        throw runtime_error("Undefined type '" + it2->type.first + ":" + it2->type.second + "' in required member '" + it2->name + "' of '" + it->first.first + ":" + it->first.second + "'");
-                    }
 cerr << it->second->name.first << " " << it->second->name.second << " - " << it2->type.second << endl;
                     cerr << "Undefined type '" + it2->type.first + ":" + it2->type.second + "' in required member '" + it2->name + "' of '" + it->first.first + ":" + it->first.second + "'" << endl;
                 }
@@ -774,11 +765,6 @@ int main_wrapper(int argc, char** argv) {
             if (!strcmp(argv[1], "-v")) {
                 verbose = true;
                 cerr << "Verbose mode" << endl;
-
-                continue;
-            } else if (!strcmp(argv[1], "-s")) {
-                strict = true;
-                if (verbose) cerr << "Strict mode" << endl;
 
                 continue;
             } else if (!strcmp(argv[1], "-cmake")) {
