@@ -10,6 +10,8 @@
 
 namespace XML {
 
+class XMLObject;
+
 typedef std::string ClassName;
 typedef std::string ElementName;
 typedef std::string Namespace;
@@ -28,8 +30,8 @@ struct Attribute {
   Attribute& operator=(const int& i) { value = std::to_string(i); return *this; };
   Attribute& operator=(const double& d) { value = std::to_string(d); return *this; };
 };
-
-class XMLObject;
+typedef std::vector<Attribute> Attributes;
+typedef std::vector<std::unique_ptr<XMLObject>> Children;
 
 template<typename T> XMLObject* createInstance(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent) { return new T(className, element, parent); } /// Template function used to store in factory
 
@@ -96,8 +98,8 @@ public:
   const ClassName className;
 
   XMLObject* parent;
-  std::vector<std::unique_ptr<XMLObject>> children; ///< child nodes of the XML element
-  std::vector<Attribute> attributes; /// attributes of the XML element
+  Children children; ///< child nodes of the XML element
+  Attributes attributes; /// attributes of the XML element
 
   std::string stringify() const;
 
