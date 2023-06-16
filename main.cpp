@@ -722,10 +722,17 @@ string generateCMakeLists() {
     oss << "endforeach()" << endl;
     oss << endl;
 
-    oss << "# Create the library" << endl;
+    oss << "# Create the object library" << endl;
     oss << "set(LIB \"${CMAKE_PROJECT_NAME}\")" << endl;
     oss << "set(OBJECTLIB \"${LIB}_OBJECTS\")" << endl;
     oss << "add_library(${OBJECTLIB} OBJECT ${SOURCES})" << endl;
+    oss << endl;
+
+    oss << "# Set optimization flags for the target" << endl;
+    oss << "target_compile_options(${OBJECTLIB} PRIVATE -O3)" << endl;
+    oss << endl;
+
+    oss << "# Create the library" << endl;
     oss << "add_library(${LIB} STATIC $<TARGET_OBJECTS:${OBJECTLIB}>)" << endl;
     oss << endl;
 
