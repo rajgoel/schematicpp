@@ -40,7 +40,7 @@ int main(void) {
       else {
         cout << " without id";
       }
-      cout << ": " << &node << endl;
+      cout << ": " << node << endl;
     }
   }
 

@@ -150,5 +150,10 @@ std::ostream& operator<< (std::ostream& os, const XMLObject* obj) {
 	return os;
 }
 
+std::ostream& operator<< (std::ostream& os, const XMLObject& obj) {
+  os << obj.stringify();
+	return os;
+}
+
 } // end namespace XML
 

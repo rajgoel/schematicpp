@@ -139,6 +139,7 @@ public:
 };
 
 std::ostream& operator<< (std::ostream& os, const XMLObject* obj);
+std::ostream& operator<< (std::ostream& os, const XMLObject& obj);
 
 } // end namespace XML
 
