@@ -52,13 +52,14 @@ using namespace xercesc;
 using namespace schematicpp;
 
 static void printUsage() {
-    cerr << "USAGE: schematicpp [-v] [-cmake targetname] [--dry-run] output-dir list-of-XSL-documents" << endl;
+    cerr << "USAGE: schematicpp [-v] [-s] -p <projectname> -o <output-dir> -i <schema_1> ... <schema_n>" << endl;
     cerr << " -v\tVerbose mode" << endl;
-    cerr << " -cmake\tGenerate CMakeLists.txt with all generated .cpp files as part of a library with the specified target name" << endl;
-    cerr << " --dry-run\tPerform generation but don't write anything to disk - instead does exit(1) if any file changes" << endl;
+    cerr << " -s\tSimulate generation but don't write anything to disk" << endl;
+    cerr << " -p\tProvide project name" << endl;
+    cerr << " -o\tProvide output directory" << endl;
+    cerr << " -i\tProvide list of XML schema definition files" << endl;
     cerr << endl;
     cerr << " Generates C++ classes for marshalling and unmarshalling XML to C++ objects according to the given schemas." << endl;
-    cerr << " Files are output in the specified output directory and are named type.h and type.cpp" << endl;
 }
 
 //maps namespace abbreviation to their full URIs
@@ -74,7 +75,6 @@ map<FullName, Class*> classes;
 map<FullName, Class*> groups;
 
 bool verbose = false;
-static std::string cmakeTargetName;
 
 static Class* addClass(Class *cl, map<FullName, Class*>& to = classes) {
     map<FullName, Class*>::iterator it = to.find(cl->name);
@@ -629,7 +629,7 @@ static void diffAndReplace(string fileName, string newContents, bool dry_run) {
     }
 }
 
-string generateCMakeLists() {
+string generateCMakeLists(const std::string& cmakeTargetName) {
 
     list<Class*> sorted;
     list<Class*> unsorted;
@@ -754,35 +754,47 @@ string generateCMakeLists() {
 int main_wrapper(int argc, char** argv) {
     try {
         bool dry_run = false;
+        std::string cmakeTargetName;
+        string outputDir;
+        vector<string> schemaNames;
+
         std::string program(argv[0]);
+        argv++;
+        argc--;
 
-        if (argc <= 2) {
-            printUsage();
-            return 1;
-        }
-
-        for (; argc > 3; argv++, argc--) {
-            if (!strcmp(argv[1], "-v")) {
+        while ( argc > 0 ) {
+            if (!strcmp(argv[0], "-v")) {
                 verbose = true;
                 cerr << "Verbose mode" << endl;
-
-                continue;
-            } else if (!strcmp(argv[1], "-cmake")) {
-                cmakeTargetName = argv[2];
-                if (verbose) cerr << "CMake target name: " << cmakeTargetName << endl;
-
+            } else if (!strcmp(argv[0], "-s")) {
+                dry_run = true;
+                if (verbose) cerr << "Simulate generation" << endl;
+            } else if (!strcmp(argv[0], "-p") && argc > 1 && argv[1][0] != '-') {
                 argv++;
                 argc--;
-
-                continue;
-            } else if (!strcmp(argv[1], "--dry-run")) {
-                dry_run = true;
-                if (verbose) cerr << "Performing dry run" << endl;
-
-                continue;
+                cmakeTargetName = argv[0];
+                if (verbose) cerr << "Project name: " << argv[0] << endl;
+            } else if (!strcmp(argv[0], "-o") && argc > 1 && argv[1][0] != '-') {
+                argv++;
+                argc--;
+                outputDir = argv[0];
+                if (verbose) cerr << "Output directory: " << argv[0] << endl;
+            } else if (!strcmp(argv[0], "-i")) {
+                  while ( argc > 1 && argv[1][0] != '-' ) {
+                      argv++;
+                      argc--;
+                      schemaNames.push_back(argv[0]);
+                      if (verbose) cerr << "XML schema definition: " << argv[0] << endl;
+                  }
             }
 
-            break;
+            argv++;
+            argc--;
+        }
+
+        if ( cmakeTargetName.empty() || outputDir.empty() || schemaNames.empty() ) {
+            printUsage();
+            return 1;
         }
 
         XMLPlatformUtils::Initialize();
@@ -807,12 +819,6 @@ int main_wrapper(int argc, char** argv) {
         addClass(new IdClass);
         addClass(new IdRefClass);
 
-        string outputDir = argv[1];
-        vector<string> schemaNames;
-
-        for (int x = 2; x < argc; x++) {
-            schemaNames.push_back(argv[x]);
-        }
 
         work(outputDir, schemaNames);
 
@@ -884,7 +890,7 @@ int main_wrapper(int argc, char** argv) {
             ostringstream name;
             name << outputDir << "/CMakeLists.txt";
 
-            diffAndReplace(name.str(), generateCMakeLists(), dry_run);
+            diffAndReplace(name.str(), generateCMakeLists(cmakeTargetName), dry_run);
         }
 
         XMLPlatformUtils::Terminate();
