@@ -5,6 +5,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <list>
 
 #include <xercesc/dom/DOM.hpp>
 
@@ -73,8 +74,8 @@ protected:
 template<typename T> friend XMLObject* createInstance(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent); 
 
 protected:
-
   XMLObject(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent);
+  XMLObject(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent, const Attributes& defaultAttributes);
 
   inline static Factory factory;
   inline static Attribute _attribute_; ///> placeholder to be used for temporary initialization of references
@@ -100,6 +101,7 @@ public:
   XMLObject* parent;
   Children children; ///< child nodes of the XML element
   Attributes attributes; /// attributes of the XML element
+	inline static const Attributes defaults = {};
 
   std::string stringify() const;
 

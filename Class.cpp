@@ -122,12 +122,16 @@ void Class::writeImplementation(ostream& os) const {
     os << endl;
 
     if (!isSimple()) {
-      os << getCppClassname() << "::" << getCppClassname() << "(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent) :" << endl;
+///
+      os << getCppClassname() << "::" << getCppClassname() << "(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent) : " << getCppClassname() << "(className,element,parent,defaults) {}" << endl;
+      os << endl;
+///
+      os << getCppClassname() << "::" << getCppClassname() << "(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent, const Attributes& defaultAttributes) :" << endl;
       if (base) {
-        os << "\t" << base->getCppClassname() << "(className, element, parent)" << endl;
+        os << "\t" << base->getCppClassname() << "(className, element, parent, defaultAttributes)" << endl;
       }
       else {
-        os << "\tXMLObject(className, element, parent)" << endl;
+        os << "\tXMLObject(className, element, parent, defaultAttributes)" << endl;
       }
       //member initialization
       for (list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
@@ -137,10 +141,10 @@ void Class::writeImplementation(ostream& os) const {
 
         if ( it->isAttribute ) {
           if (it->isOptional() ) {
-            os << "\t, " << it->cppName << "(std::nullopt) // use placeholder because defaults are not available yet" << endl;
+            os << "\t, " << it->cppName << "(getOptionalAttributeByName(\"" << it->name<< "\"))" << endl;
           }
           else {
-            os << "\t, " << it->cppName << "(_attribute_) // use placeholder because defaults are not available yet" << endl;
+            os << "\t, " << it->cppName << "(getRequiredAttributeByName(\"" << it->name<< "\"))" << endl;
           }
         }
         else if (!it->cl->isBuiltIn()) {
@@ -156,7 +160,7 @@ void Class::writeImplementation(ostream& os) const {
         }
       }
       os << "{" << endl;
-
+/*
       os << "\t// add defaults for missing attributes" << endl;
       os << "\tfor ( auto& defaultAttribute : defaults ) {" << endl;
       os << "\t\tif ( !getOptionalAttributeByName(defaultAttribute.name) ) {" << endl;
@@ -164,7 +168,9 @@ void Class::writeImplementation(ostream& os) const {
       os << "\t\t}" << endl;
       os << "\t}" << endl;
       os << endl;
+*/
 
+/*
       os << "\t// set references for attribute members" << endl;
       //member manipulation
       for (list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
@@ -185,7 +191,7 @@ void Class::writeImplementation(ostream& os) const {
           }
         }
       }
-
+*/
       os << "}" << endl;
     }
 }
@@ -256,6 +262,7 @@ void Class::writeHeader(ostream& os) const {
         os << "\tinline static bool registered = registerClass();" << endl;
         os << "protected:" << endl;
         os << "\t" << cppName << "(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent);" << endl;
+        os << "\t" << cppName << "(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent, const Attributes& defaultAttributes);" << endl;
         os << endl;
 
         if (friends.size()) {
@@ -270,16 +277,29 @@ void Class::writeHeader(ostream& os) const {
         os << "public:" << endl;
 
         os << "\t/// default attributes to be used if they are not explicitly provided" << endl;
-        os << "\tinline static const vector<Attribute> defaults = {";
+        os << "\tinline static const Attributes defaults = {";
         bool first = true;
-        for (list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
+////
+        const Class* c = this;
+        while ( true ) {
+         for (list<Member>::const_iterator it = c->members.begin(); it != c->members.end(); it++) {
           if ( !it->defaultStr.empty() ) {
             if (!first) os << ",";
             os << endl;
             os << "\t\t{.name = \"" << it->name  << "\", .value = \"" << it->defaultStr << "\"}";
+//            if ( c != this ) os << " /* inherited */";
             first = false; 
           }
+         }
+         //
+         if ( c->base ) { 
+          c = c->base;
+         }
+         else { 
+          break;
+         }
         }
+///
         os << endl;
         os << "\t};" << endl; 
         os << endl;

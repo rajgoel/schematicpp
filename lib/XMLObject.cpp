@@ -75,17 +75,19 @@ XMLObject* XMLObject::createObject(const xercesc::DOMElement* element, XMLObject
   }
 std::cout << "Unknown element '" << elementName << "' using 'XMLObject' instead" << std::endl;
   return createInstance<XMLObject>("XMLObject", element, parent);
-};
+}
 
-XMLObject::XMLObject(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent) : className(className), parent(parent) {
+XMLObject::XMLObject(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent) : XMLObject::XMLObject(className, element, parent, defaults) {}
+
+XMLObject::XMLObject(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent, const Attributes& defaultAttributes) : className(className), parent(parent) {
 
   std::cout <<"XMLObject constructor\n";
 
   elementName = xercesc::XMLString::transcode(element->getLocalName());
   prefix = xercesc::XMLString::transcode(element->getPrefix());
+
   // set attributes
   xercesc::DOMNamedNodeMap* elementAttributes = element->getAttributes();
-
   for (XMLSize_t i = 0; i < elementAttributes->getLength(); i++) {
     xercesc::DOMNode* item = elementAttributes->item(i);
     Namespace attributePrefix = "";
@@ -97,6 +99,8 @@ XMLObject::XMLObject(const ClassName& className, const xercesc::DOMElement* elem
     AttributeValue attributeValue = xercesc::XMLString::transcode(item->getNodeValue());
     attributes.push_back( { attributePrefix, attributeName, attributeValue } );
   }
+  // add default attributes 
+  // TODO
 
   // set children
   for (xercesc::DOMElement *childElement = element->getFirstElementChild(); childElement; childElement = childElement->getNextElementSibling()) {
