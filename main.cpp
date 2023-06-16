@@ -26,6 +26,8 @@
 #include <stdexcept>
 #include <sstream>
 #include <fstream>
+#include <algorithm>
+#include <filesystem>
 #include <xercesc/parsers/XercesDOMParser.hpp>
 #include <xercesc/util/PlatformUtils.hpp>
 #include <xercesc/dom/DOMDocument.hpp>
@@ -367,8 +369,7 @@ static void parseComplexType(DOMElement *element, FullName fullName, Class *cl) 
             //add group ref
             cl->groups.push_back(toFullName(XercesString(child->getAttribute(XercesString("ref")))));
         } else if (name == "anyAttribute") {
-            cerr << "Found anyAttribute for " << (string)fullName.second << endl;
-            // TODO 
+            // ignore
         } else {
             throw runtime_error("Unknown complexType child of type " + (string)name);
         }
@@ -638,18 +639,110 @@ static void diffAndReplace(string fileName, string newContents, bool dry_run) {
 }
 
 string generateCMakeLists() {
-    ostringstream oss;
 
-    oss << "cmake_minimum_required(VERSION 2.6)" << endl;
-    oss << "add_library(" << cmakeTargetName << endl;
+    list<Class*> sorted;
+    list<Class*> unsorted;
 
     for (map<FullName, Class*>::iterator it = classes.begin(); it != classes.end(); it++) {
-        if (!it->second->isSimple()) {
-            oss << "\t" << it->first.second << ".cpp" << endl;
+      unsorted.push_back(it->second);
+    }
+    while ( unsorted.size() ) {
+      for (auto c : unsorted) {
+        if ( !c->hasBase() || std::find(sorted.begin(),sorted.end(),c->base) != sorted.end() ) {
+          sorted.push_back(c);
+          unsorted.remove(c);
+          break;
         }
+      }
     }
 
+    ostringstream oss;
+
+    oss << "cmake_minimum_required(VERSION 3.1)" << endl;
+    oss << "project(" << cmakeTargetName << ")" << endl;
+
+    oss << "# Set the C++ standard (change as needed)" << endl;
+    oss << "set(CMAKE_CXX_STANDARD 20)" << endl;
+    oss << endl;
+
+    oss << "# Filename of main" << endl;
+    oss << "set(SRC \"${PROJECT_SOURCE_DIR}/main.cpp\" CACHE STRING \"Name of source file\")" << endl;
+    oss << "# Filename of executable" << endl;
+    oss << "set(EXE \"\" CACHE STRING \"Name of executable to be built\")" << endl;
+    oss << "if ( NOT EXE )" << endl;
+    oss << "\tget_filename_component(EXE ${SRC} NAME_WE)" << endl;
+    oss << "endif()" << endl;
+    oss << endl;
+
+    oss << "# Set output directories" << endl;
+    oss << "set(LIB_DIR \"lib\" CACHE STRING \"Library directory\")" << endl;
+    oss << "set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/${LIB_DIR})" << endl;
+    oss << "set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR})" << endl;
+    oss << endl;
+
+    oss << "find_program(CCACHE_FOUND \"ccache\")" << endl;
+    oss << "set(CCACHE_SUPPORT ON CACHE BOOL \"Enable ccache support\")" << endl;
+    oss << "if (CCACHE_FOUND AND CCACHE_SUPPORT)" << endl;
+    oss << "\tset_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE \"ccache\")" << endl;
+    oss << "\tset_property(GLOBAL PROPERTY RULE_LAUNCH_LINK \"ccache\")" << endl;
+    oss << "endif()" << endl;
+    oss << endl;
+
+    oss << "set(SOURCES" << endl;
+    oss << "\tclasses/XMLObject.cpp" << endl;
+    for (auto c : sorted) {
+        if (!c->isSimple()) {
+            oss << "\tclasses/" << c->getClassname() << ".cpp" << endl;
+        }
+    }
     oss << ")" << endl;
+    oss << endl;
+
+    oss << "set(HEADERS" << endl;
+    oss << "\tclasses/XMLObject.h" << endl;
+    for (auto c : sorted) {
+        if (!c->isSimple()) {
+            oss << "\tclasses/" << c->getClassname() << ".h" << endl;
+        }
+    }
+    oss << ")" << endl;
+    oss << endl;
+
+    oss << "# Create output directory for the library" << endl;
+    oss << "file(MAKE_DIRECTORY ${LIB_DIR})" << endl;
+    oss << endl;
+
+    oss << "# Generate the single header file" << endl;
+    oss << "set(SINGLE_HEADER_PATH \"${LIB_DIR}/${CMAKE_PROJECT_NAME}.h\")" << endl;
+    oss << "file(WRITE ${SINGLE_HEADER_PATH} \"// Automatically generated single header file\\n\")" << endl;
+    oss << "foreach(HEADER ${HEADERS})" << endl;
+    oss << "\tfile(READ ${HEADER} HEADER_CONTENTS)" << endl;
+    oss << "\tstring(REGEX REPLACE \"#include \\\".*\\\"\\n\" \"\" HEADER_CONTENTS \"${HEADER_CONTENTS}\")" << endl;
+    oss << "\tfile(APPEND ${SINGLE_HEADER_PATH} \"${HEADER_CONTENTS}\")" << endl;
+    oss << "endforeach()" << endl;
+    oss << endl;
+
+    oss << "# Create the library" << endl;
+    oss << "set(LIB \"${CMAKE_PROJECT_NAME}\")" << endl;
+    oss << "set(OBJECTLIB \"${LIB}_OBJECTS\")" << endl;
+    oss << "add_library(${OBJECTLIB} OBJECT ${SOURCES})" << endl;
+    oss << "add_library(${LIB} STATIC $<TARGET_OBJECTS:${OBJECTLIB}>)" << endl;
+    oss << endl;
+
+    oss << "# Create the executable" << endl;
+    oss << "if(\"${EXE}\" STREQUAL \"${LIB}\")" << endl;
+    oss << "\tmessage(SEND_ERROR \"Executable must not have the same name as the library: ${LIB}\")" << endl;
+    oss << "elseif( NOT EXISTS ${SRC} )" << endl;
+    oss << "\tmessage(SEND_ERROR \"Source file not found: ${SRC}\")" << endl;
+    oss << "else()" << endl;
+    oss << "\tmessage(STATUS \"Build ${EXE} using ${SRC}\")" << endl;
+    oss << "\tadd_executable(${EXE} ${SRC} $<TARGET_OBJECTS:${OBJECTLIB}>)" << endl;
+    oss << "\ttarget_link_libraries(${EXE} ${LIB} xerces-c)" << endl;
+    oss << "endif()" << endl;
+    oss << endl;
+
+    oss << "unset(SRC CACHE)" << endl;
+    oss << "unset(EXE CACHE)" << endl;
 
     return oss.str();
 }
@@ -727,13 +820,17 @@ int main_wrapper(int argc, char** argv) {
 
         if (verbose) cerr << "Everything seems to be in order. Writing/updating headers and implementations as needed." << endl;
 
+        // create target directory
+        std::filesystem::create_directory(outputDir);
+        std::filesystem::create_directory(outputDir + "/classes");
+
         //dump the appenders and parsers of all non-build-in classes
         for (map<FullName, Class*>::iterator it = classes.begin(); it != classes.end(); it++) {
             if (!it->second->isBuiltIn()) {
                 if (!it->second->isSimple())
                 {
                     ostringstream name, implementation;
-                    name << outputDir << "/" << it->first.second << ".cpp";
+                    name << outputDir << "/classes/" << it->first.second << ".cpp";
 
                     //write implementation to memory, then diff against the possibly existing file
                     it->second->writeImplementation(implementation);
@@ -743,7 +840,7 @@ int main_wrapper(int argc, char** argv) {
 
                 {
                     ostringstream name, header;
-                    name << outputDir << "/" << it->first.second << ".h";
+                    name << outputDir << "/classes/" << it->first.second << ".h";
 
                     //write header to memory, then diff against the possibly existing file
                     it->second->writeHeader(header);

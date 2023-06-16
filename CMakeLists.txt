@@ -17,8 +17,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.1)
 project(schematicpp)
+
+set(CMAKE_CXX_STANDARD 17)
 
 add_executable(schematicpp
     main.cpp
