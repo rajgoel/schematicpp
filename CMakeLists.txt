@@ -22,6 +22,8 @@ project(schematicpp)
 
 set(CMAKE_CXX_STANDARD 17)
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR})
+
 add_executable(schematicpp
     main.cpp
     XercesString.cpp
@@ -37,6 +39,3 @@ if(WIN32)
 else(WIN32)
     target_link_libraries(schematicpp xerces-c)
 endif(WIN32)
-
-#install(TARGETS schematicpp DESTINATION bin)
-

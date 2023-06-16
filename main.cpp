@@ -763,6 +763,7 @@ string generateCMakeLists() {
 int main_wrapper(int argc, char** argv) {
     try {
         bool dry_run = false;
+        std::string program(argv[0]);
 
         if (argc <= 2) {
             printUsage();
@@ -836,6 +837,36 @@ int main_wrapper(int argc, char** argv) {
         // create target directory
         std::filesystem::create_directory(outputDir);
         std::filesystem::create_directory(outputDir + "/classes");
+
+        // copy XMLObject.h and XMLObject.h if necessary
+        if ( !std::filesystem::exists(outputDir + "/classes/XMLObject.h")
+             || !std::filesystem::exists(outputDir + "/classes/XMLObject.cpp") ) {
+            bool copied = false;
+            std::size_t pos = program.find_last_of("/");
+            if ( pos !=  std::string::npos ) {
+              std::string path = program.substr(0,pos+1);
+              if ( std::filesystem::exists(path + "/lib/XMLObject.h")
+                   && std::filesystem::exists(path + "/lib/XMLObject.cpp") ) {
+                  if (!dry_run) {
+                      std::filesystem::copy_file(path + "/lib/XMLObject.h",outputDir + "/classes/XMLObject.h");
+                      std::filesystem::copy_file(path + "/lib/XMLObject.cpp",outputDir + "/classes/XMLObject.cpp");
+                  }
+                  if (verbose) {
+                    cerr << "C " << outputDir + "/classes/XMLObject.h" << endl;
+                    cerr << "C " << outputDir + "/classes/XMLObject.cpp" << endl;
+                  }
+                  copied = true;
+                  files_changed = true;
+              }
+            }
+            if ( !copied ) {
+                 cerr << "Cannot copy 'XMLObject.h' and 'XMLObject.cpp' from 'lib' to '" << outputDir << "/classes'. Please make sure to copy files manually!" << endl;
+            }
+        }
+        else if (verbose) {
+            cerr << ". " << outputDir + "/classes/XMLObject.h" << endl;
+            cerr << ". " << outputDir + "/classes/XMLObject.cpp" << endl;
+        }
 
         //dump the appenders and parsers of all non-build-in classes
         for (map<FullName, Class*>::iterator it = classes.begin(); it != classes.end(); it++) {
