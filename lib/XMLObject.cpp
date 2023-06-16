@@ -2,7 +2,6 @@
 #include <xercesc/parsers/XercesDOMParser.hpp>
 #include <xercesc/util/BinInputStream.hpp>
 #include <xercesc/sax/InputSource.hpp>
-// #include <iostream>
 
 namespace XML {
 
@@ -108,6 +107,9 @@ XMLObject::XMLObject(const ClassName& className, const xercesc::DOMElement* elem
     children.push_back(std::unique_ptr<XMLObject>(createObject(childElement,this)));
   }
 
+  if ( children.empty() ) {
+    textContent = xercesc::XMLString::transcode(element->getTextContent());
+  }
 }
 
 Attribute& XMLObject::getRequiredAttributeByName(const AttributeName& attributeName) {
@@ -140,7 +142,7 @@ std::string XMLObject::stringify() const {
   for ( auto& child : children ) {
     xmlString += child->stringify();
   }
-
+  xmlString += textContent;
   xmlString += std::string("</") + (!prefix.empty() ? prefix + ":" : "") + elementName + ">";
   return xmlString;
 }

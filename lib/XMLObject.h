@@ -15,6 +15,7 @@ class XMLObject;
 
 typedef std::string ClassName;
 typedef std::string ElementName;
+typedef std::string TextContent;
 typedef std::string Namespace;
 typedef std::string AttributeName;
 typedef std::string AttributeValue;
@@ -98,6 +99,7 @@ public:
   const ClassName className;
 
   XMLObject* parent;
+  TextContent textContent; ///< textual content of XML element without children
   Children children; ///< child nodes of the XML element
   Attributes attributes; /// attributes of the XML element
 	inline static const Attributes defaults = {};
