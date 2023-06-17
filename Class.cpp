@@ -291,7 +291,7 @@ void Class::writeHeader(ostream& os) const {
               else {
                 os << "Attribute& " << it->cppName << "; ";
               }
-              os << "///< Attribute value can be expected to be of type '" << (it->cl->isBuiltIn() ? it->cl->getCppClassname() : it->cl->base->getCppClassname()) << "'" << endl;
+              os << "///< Attribute value can be expected to be of type '" << (it->cl->isBuiltIn() ? it->cl->getClassname() : it->cl->base->getCppClassname()) << "'" << endl;
             }
             else if (!it->cl->isBuiltIn()) {
               std::string cppMember = (it->cl->isBuiltIn() ? it->cl->getClassname() : it->cl->getCppClassname());
@@ -306,7 +306,6 @@ void Class::writeHeader(ostream& os) const {
               }
             }
             else {
-//              os << "// " << it->cppName << " of type " << it->cl->getCppClassname() << " (" << it->cl->getClassname() << ") ignored" << endl; 
               if (it->isArray()) {
                 os << "vector< reference_wrapper<XMLObject> > " << it->cppName << ";" << endl;
               }
