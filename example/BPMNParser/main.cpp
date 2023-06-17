@@ -18,7 +18,7 @@ int main(void) {
   
   cout << "Model has " << processes.size() << " processes:" << endl;
   for ( tProcess& process : processes ) {
-    auto processId = process.getOptionalAttributeByName("id");
+    optional< reference_wrapper<Attribute> > processId = process.id;
     cout << "- Process";
     if ( processId.has_value() ) {
       cout << " with id '" << (string)processId->get() << "'";
