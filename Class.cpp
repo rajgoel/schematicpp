@@ -154,6 +154,17 @@ void Class::writeImplementation(ostream& os) const {
             os << "\t, " << it->cppName << "(getRequiredChild<" << it->cl->getCppClassname() << ">())" << endl;
           }
         }
+        else {
+          if (it->isArray()) {
+            os << "\t, " << it->cppName << "(getChildrenByName(\"" << it->name << "\"))" << endl;
+          }
+          else if (it->isOptional() ) {
+            os << "\t, " << it->cppName << "(getOptionalChildByName(\"" << it->name << "\"))" << endl;
+          }
+          else {
+            os << "\t, " << it->cppName << "(getRequiredChildByName(\"" << it->name << "\"))" << endl;
+          }
+        }
       }
       os << "{" << endl;
       os << "}" << endl;
@@ -295,7 +306,16 @@ void Class::writeHeader(ostream& os) const {
               }
             }
             else {
-              os << "// " << it->cppName << " of type " << it->cl->getCppClassname() << " (" << it->cl->getClassname() << ") ignored" << endl; 
+//              os << "// " << it->cppName << " of type " << it->cl->getCppClassname() << " (" << it->cl->getClassname() << ") ignored" << endl; 
+              if (it->isArray()) {
+                os << "vector< reference_wrapper<XMLObject> > " << it->cppName << ";" << endl;
+              }
+              else if (it->isOptional()) {
+                os << "optional< reference_wrapper<XMLObject> > " << it->cppName << ";" << endl;
+              }
+							else {
+                os << "XMLObject& " << it->cppName << ";" << endl;
+              }
             }
         }
 
@@ -318,10 +338,16 @@ bool Class::Member::isOptional() const {
     return minOccurs == 0 && maxOccurs == 1;
 }
 
+// https://en.cppreference.com/w/cpp/keyword
 std::set<std::string_view> Class::keywordSet = {
+    "alignas",
+    "alignof",
     "and",
     "and_eq",
     "asm",
+    "atomic_cancel",
+    "atomic_commit",
+    "atomic_noexcept",
     "auto",
     "bitand",
     "bitor",
@@ -330,11 +356,22 @@ std::set<std::string_view> Class::keywordSet = {
     "case",
     "catch",
     "char",
+    "char8_t",
+    "char16_t",
+    "char32_t",
     "class",
     "compl",
+    "concept",
     "const",
+    "consteval",
+    "constexpr",
+    "constinit",
     "const_cast",
     "continue",
+    "co_await",
+    "co_return",
+    "co_yield",
+    "decltype",
     "default",
     "delete",
     "do",
@@ -359,24 +396,30 @@ std::set<std::string_view> Class::keywordSet = {
     "new",
     "not",
     "not_eq",
+    "nullptr",
     "operator",
     "or",
     "or_eq",
     "private",
     "protected",
     "public",
+    "reflexpr",
     "register",
     "reinterpret_cast",
+    "requires",
     "return",
     "short",
     "signed",
     "sizeof",
     "static",
+    "static_assert",
     "static_cast",
     "struct",
     "switch",
+    "synchronized",
     "template",
     "this",
+    "thread_local",
     "throw",
     "true",
     "try",

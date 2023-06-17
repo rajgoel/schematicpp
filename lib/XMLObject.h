@@ -134,6 +134,10 @@ public:
     return result;
   }
 
+  XMLObject& getRequiredChildByName(const ElementName& elementName);
+  std::optional< std::reference_wrapper<XMLObject> > getOptionalChildByName(const ElementName& elementName);
+  std::vector< std::reference_wrapper<XMLObject> > getChildrenByName(const ElementName& elementName);
+
   Attribute& getRequiredAttributeByName(const AttributeName& attributeName);
   std::optional< std::reference_wrapper<Attribute> > getOptionalAttributeByName(const AttributeName& attributeName);
 

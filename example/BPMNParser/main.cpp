@@ -40,8 +40,17 @@ int main(void) {
       else {
         cout << " without id";
       }
-      cout << ": " << node << endl;
+      
+      cout << " has " << node.incoming.size() << " incoming and " << node.outgoing.size() << " outgoing arcs." << endl;
+      for ( auto& incoming : node.incoming ) {
+        cout << "    - incoming: " << incoming.get().textContent << endl;
+      }
+      for ( auto& outgoing : node.outgoing ) {
+        cout << "    - outgoing: " << outgoing.get().textContent << endl;
+      }
     }
+    cout << process << endl;
+    cout << endl;
   }
 
   return 0;

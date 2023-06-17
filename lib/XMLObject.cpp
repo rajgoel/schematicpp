@@ -112,6 +112,34 @@ XMLObject::XMLObject(const ClassName& className, const xercesc::DOMElement* elem
   }
 }
 
+  XMLObject& XMLObject::getRequiredChildByName(const ElementName& elementName) {
+    for ( auto& child : children ) {
+      if ( child->elementName == elementName ) {
+        return *child;
+      }
+    }
+    throw std::runtime_error("Failed to get required child of element '" + elementName + "'");
+  }
+
+  std::optional< std::reference_wrapper<XMLObject> > XMLObject::getOptionalChildByName(const ElementName& elementName) {
+    for ( auto& child : children ) {
+      if ( child->elementName == elementName ) {
+        return *child;
+      }
+    }
+    return std::nullopt;
+  }
+
+  std::vector< std::reference_wrapper<XMLObject> > XMLObject::getChildrenByName(const ElementName& elementName) {
+    std::vector< std::reference_wrapper<XMLObject> > result;
+    for ( auto& child : children ) {
+      if ( child->elementName == elementName ) {
+        result.push_back(*child);
+      }
+    }
+    return result;
+  }
+
 Attribute& XMLObject::getRequiredAttributeByName(const AttributeName& attributeName) {
   auto it = std::find_if(attributes.begin(), attributes.end(), 
                          [attributeName](Attribute& attribute) { return attribute.name == attributeName; }
