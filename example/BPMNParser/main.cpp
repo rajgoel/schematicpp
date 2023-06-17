@@ -42,11 +42,11 @@ int main(void) {
       }
       
       cout << " has " << node.incoming.size() << " incoming and " << node.outgoing.size() << " outgoing arcs." << endl;
-      for ( auto& incoming : node.incoming ) {
-        cout << "    - incoming: " << incoming.get().textContent << endl;
+      for ( XMLObject& incoming : node.incoming ) {
+        cout << "    - incoming: " << incoming.textContent << endl;
       }
-      for ( auto& outgoing : node.outgoing ) {
-        cout << "    - outgoing: " << outgoing.get().textContent << endl;
+      for ( XMLObject& outgoing : node.outgoing ) {
+        cout << "    - outgoing: " << outgoing.textContent << endl;
       }
     }
     cout << process << endl;
