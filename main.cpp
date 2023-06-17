@@ -75,6 +75,7 @@ map<FullName, Class*> classes;
 map<FullName, Class*> groups;
 
 bool verbose = false;
+std::string schemaName;
 
 static Class* addClass(Class *cl, map<FullName, Class*>& to = classes) {
     map<FullName, Class*>::iterator it = to.find(cl->name);
@@ -484,13 +485,13 @@ static void work(string outputDir, const vector<string>& schemaNames) {
     parser.setDoNamespaces(true);
 
     for (size_t x = 0; x < schemaNames.size(); x++) {
-        string name = schemaNames[x];
-        parser.parse(name.c_str());
+        schemaName = schemaNames[x];
+        parser.parse(schemaName.c_str());
 
         DOMDocument *document = parser.getDocument();
 
         if (!document) {
-            throw runtime_error("Failed to parse '" + name + "' - file does not exist?");
+            throw runtime_error("Failed to parse '" + schemaName + "' - file does not exist?");
         }
 
         DOMElement *root = document->getDocumentElement();

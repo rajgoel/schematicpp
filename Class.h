@@ -96,6 +96,7 @@ public:
     const FullName name;
     const std::string cppName;
     const ClassType type;
+    const std::string schema;
 
     bool isDocument;            //true if this is a document class
 
