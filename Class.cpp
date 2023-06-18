@@ -27,6 +27,7 @@ using namespace std;
 
 extern bool verbose;
 extern string schemaName;
+extern string cppNamespace;
 
 Class::Class(FullName name, ClassType type) : name(name), cppName(sanitize(name.second)), type(type), 
         isDocument(false), base(NULL), schema(schemaName)  {
@@ -120,6 +121,7 @@ void Class::writeImplementation(ostream& os) const {
     os << "#include \"" << className << ".h\"" << endl;
     os << endl;
     os << "using namespace XML;" << endl;
+    os << "using namespace XML::" << cppNamespace << ";" << endl;
     os << endl;
 
     if (!isSimple()) {
@@ -176,14 +178,14 @@ void Class::writeHeader(ostream& os) const {
     ClassName className = getClassname();
     ClassName cppName = getCppClassname();
 
-    os << "#ifndef XML_" << className << "_H" << endl;
-    os << "#define XML_" << className << "_H" << endl;
+    os << "#ifndef XML_" << cppNamespace << "_" << className << "_H" << endl;
+    os << "#define XML_" << cppNamespace << "_" << className << "_H" << endl;
 
     os << "#include <memory>" << endl;
     os << "#include <optional>" << endl;
     os << "#include <vector>" << endl;
     os << endl;
-    os << "#include \"XMLObject.h\"" << endl;
+    os << "#include \"../XMLObject.h\"" << endl;
 
     //simple types only need a typedef
     if (isSimple()) {
@@ -204,7 +206,7 @@ void Class::writeHeader(ostream& os) const {
         os << endl;
         os << "using namespace std;" << endl;
         os << endl;
-        os << "namespace XML {" << endl;
+        os << "namespace XML::" << cppNamespace << " {" << endl;
 
         os << endl;
         bool memberClass = false;
@@ -252,7 +254,7 @@ void Class::writeHeader(ostream& os) const {
 
         os << " {" << endl;
 
-        os << "\ttemplate<typename T> friend XMLObject* createInstance(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent);" << endl; 
+        os << "\ttemplate<typename T> friend XMLObject* ::XML::createInstance(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent);" << endl; 
 
         os << "private:" << endl;
 
@@ -347,12 +349,12 @@ void Class::writeHeader(ostream& os) const {
 
         os << "};" << endl;
         os << endl;
-        os << "} // namespace XML" << endl;
+        os << "} // namespace XML::" << cppNamespace << endl;
 
     }
 
     os << endl;
-    os << "#endif // XML_" << className << "_H" << endl;
+    os << "#endif // XML_" << cppNamespace << "_" << className << "_H" << endl;
 
 }
 

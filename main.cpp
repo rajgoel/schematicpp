@@ -52,10 +52,10 @@ using namespace xercesc;
 using namespace schematicpp;
 
 static void printUsage() {
-    cerr << "USAGE: schematicpp [-v] [-s] -p <projectname> -o <output-dir> -i <schema_1> ... <schema_n>" << endl;
+    cerr << "USAGE: schematicpp [-v] [-s] -n <namespace> -o <output-dir> -i <schema_1> ... <schema_n>" << endl;
     cerr << " -v\tVerbose mode" << endl;
     cerr << " -s\tSimulate generation but don't write anything to disk" << endl;
-    cerr << " -p\tProvide project name" << endl;
+    cerr << " -p\tProvide namespace" << endl;
     cerr << " -o\tProvide output directory" << endl;
     cerr << " -i\tProvide list of XML schema definition files" << endl;
     cerr << endl;
@@ -76,6 +76,7 @@ map<FullName, Class*> groups;
 
 bool verbose = false;
 std::string schemaName;
+std::string cppNamespace;
 
 static Class* addClass(Class *cl, map<FullName, Class*>& to = classes) {
     map<FullName, Class*>::iterator it = to.find(cl->name);
@@ -630,7 +631,7 @@ static void diffAndReplace(string fileName, string newContents, bool dry_run) {
     }
 }
 
-string generateCMakeLists(const std::string& cmakeTargetName) {
+string generateCMakeLists() {
 
     list<Class*> sorted;
     list<Class*> unsorted;
@@ -649,9 +650,9 @@ string generateCMakeLists(const std::string& cmakeTargetName) {
     }
 
     ostringstream oss;
-
+/*
     oss << "cmake_minimum_required(VERSION 3.1)" << endl;
-    oss << "project(" << cmakeTargetName << ")" << endl;
+    oss << "project(" << cppNamespace << ")" << endl;
 
     oss << "# Set the C++ standard (change as needed)" << endl;
     oss << "set(CMAKE_CXX_STANDARD 20)" << endl;
@@ -679,25 +680,26 @@ string generateCMakeLists(const std::string& cmakeTargetName) {
     oss << "\tset_property(GLOBAL PROPERTY RULE_LAUNCH_LINK \"ccache\")" << endl;
     oss << "endif()" << endl;
     oss << endl;
-
-    oss << "set(SOURCES" << endl;
-    oss << "\tclasses/XMLObject.cpp" << endl;
+*/
+    oss << "set(" << cppNamespace << "_SOURCES" << endl;
+//    oss << "\tXMLObject.cpp" << endl;
     for (auto c : sorted) {
         if (!c->isSimple()) {
-            oss << "\tclasses/" << c->getClassname() << ".cpp" << endl;
+            oss << "\t" << cppNamespace << "/" << c->getClassname() << ".cpp" << endl;
         }
     }
     oss << ")" << endl;
     oss << endl;
 
-    oss << "set(HEADERS" << endl;
-    oss << "\tclasses/XMLObject.h" << endl;
+    oss << "set(" << cppNamespace << "_HEADERS" << endl;
+//    oss << "\tXMLObject.h" << endl;
     for (auto c : sorted) {
         if (!c->isSimple()) {
-            oss << "\tclasses/" << c->getClassname() << ".h" << endl;
+            oss << "\t" << cppNamespace << "/" << c->getClassname() << ".h" << endl;
         }
     }
     oss << ")" << endl;
+/*
     oss << endl;
 
     oss << "# Create output directory for the library" << endl;
@@ -748,14 +750,13 @@ string generateCMakeLists(const std::string& cmakeTargetName) {
 
     oss << "unset(SRC CACHE)" << endl;
     oss << "unset(EXE CACHE)" << endl;
-
+*/
     return oss.str();
 }
 
 int main_wrapper(int argc, char** argv) {
     try {
         bool dry_run = false;
-        std::string cmakeTargetName;
         string outputDir;
         vector<string> schemaNames;
 
@@ -770,11 +771,11 @@ int main_wrapper(int argc, char** argv) {
             } else if (!strcmp(argv[0], "-s")) {
                 dry_run = true;
                 if (verbose) cerr << "Simulate generation" << endl;
-            } else if (!strcmp(argv[0], "-p") && argc > 1 && argv[1][0] != '-') {
+            } else if (!strcmp(argv[0], "-n") && argc > 1 && argv[1][0] != '-') {
                 argv++;
                 argc--;
-                cmakeTargetName = argv[0];
-                if (verbose) cerr << "Project name: " << argv[0] << endl;
+                cppNamespace = argv[0];
+                if (verbose) cerr << "Namespace: " << argv[0] << endl;
             } else if (!strcmp(argv[0], "-o") && argc > 1 && argv[1][0] != '-') {
                 argv++;
                 argc--;
@@ -793,7 +794,7 @@ int main_wrapper(int argc, char** argv) {
             argc--;
         }
 
-        if ( cmakeTargetName.empty() || outputDir.empty() || schemaNames.empty() ) {
+        if ( cppNamespace.empty() || outputDir.empty() || schemaNames.empty() ) {
             printUsage();
             return 1;
         }
@@ -829,11 +830,12 @@ int main_wrapper(int argc, char** argv) {
 
         // create target directory
         std::filesystem::create_directory(outputDir);
-        std::filesystem::create_directory(outputDir + "/classes");
+        std::filesystem::create_directory(outputDir + "/" + cppNamespace );
+
 
         // copy XMLObject.h and XMLObject.h if necessary
-        if ( !std::filesystem::exists(outputDir + "/classes/XMLObject.h")
-             || !std::filesystem::exists(outputDir + "/classes/XMLObject.cpp") ) {
+        if ( !std::filesystem::exists(outputDir + "/XMLObject.h")
+             || !std::filesystem::exists(outputDir + "/XMLObject.cpp") ) {
             bool copied = false;
             std::size_t pos = program.find_last_of("/");
             if ( pos !=  std::string::npos ) {
@@ -841,24 +843,24 @@ int main_wrapper(int argc, char** argv) {
               if ( std::filesystem::exists(path + "/lib/XMLObject.h")
                    && std::filesystem::exists(path + "/lib/XMLObject.cpp") ) {
                   if (!dry_run) {
-                      std::filesystem::copy_file(path + "/lib/XMLObject.h",outputDir + "/classes/XMLObject.h");
-                      std::filesystem::copy_file(path + "/lib/XMLObject.cpp",outputDir + "/classes/XMLObject.cpp");
+                      std::filesystem::copy_file(path + "/lib/XMLObject.h",outputDir + "/XMLObject.h");
+                      std::filesystem::copy_file(path + "/lib/XMLObject.cpp",outputDir + "/XMLObject.cpp");
                   }
                   if (verbose) {
-                    cerr << "C " << outputDir + "/classes/XMLObject.h" << endl;
-                    cerr << "C " << outputDir + "/classes/XMLObject.cpp" << endl;
+                    cerr << "C " << outputDir + "/XMLObject.h" << endl;
+                    cerr << "C " << outputDir + "/XMLObject.cpp" << endl;
                   }
                   copied = true;
                   files_changed = true;
               }
             }
             if ( !copied ) {
-                 cerr << "Cannot copy 'XMLObject.h' and 'XMLObject.cpp' from 'lib' to '" << outputDir << "/classes'. Please make sure to copy files manually!" << endl;
+                 cerr << "Cannot copy 'XMLObject.h' and 'XMLObject.cpp' from 'lib' to '" << outputDir << "'. Please make sure to copy files manually!" << endl;
             }
         }
         else if (verbose) {
-            cerr << ". " << outputDir + "/classes/XMLObject.h" << endl;
-            cerr << ". " << outputDir + "/classes/XMLObject.cpp" << endl;
+            cerr << ". " << outputDir + "/XMLObject.h" << endl;
+            cerr << ". " << outputDir + "/XMLObject.cpp" << endl;
         }
 
         //dump the appenders and parsers of all non-build-in classes
@@ -867,7 +869,7 @@ int main_wrapper(int argc, char** argv) {
                 if (!it->second->isSimple())
                 {
                     ostringstream name, implementation;
-                    name << outputDir << "/classes/" << it->first.second << ".cpp";
+                    name << outputDir << "/" << cppNamespace << "/" << it->first.second << ".cpp";
 
                     //write implementation to memory, then diff against the possibly existing file
                     it->second->writeImplementation(implementation);
@@ -877,7 +879,7 @@ int main_wrapper(int argc, char** argv) {
 
                 {
                     ostringstream name, header;
-                    name << outputDir << "/classes/" << it->first.second << ".h";
+                    name << outputDir << "/" << cppNamespace << "/" << it->first.second << ".h";
 
                     //write header to memory, then diff against the possibly existing file
                     it->second->writeHeader(header);
@@ -887,12 +889,11 @@ int main_wrapper(int argc, char** argv) {
             }
         }
 
-        if (cmakeTargetName.size() > 0) {
-            ostringstream name;
-            name << outputDir << "/CMakeLists.txt";
 
-            diffAndReplace(name.str(), generateCMakeLists(cmakeTargetName), dry_run);
-        }
+        ostringstream name;
+        name << outputDir << "/" << cppNamespace << "/CMakeLists.txt";
+
+        diffAndReplace(name.str(), generateCMakeLists(), dry_run);
 
         XMLPlatformUtils::Terminate();
 
