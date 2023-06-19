@@ -52,7 +52,7 @@ using namespace xercesc;
 using namespace schematicpp;
 
 static void printUsage() {
-    cerr << "USAGE: schematicpp [-v] [-s] -n <namespace> -o <output-dir> -i <schema_1> ... <schema_n>" << endl;
+    cerr << "USAGE: schematic++ [-v] [-s] -n <namespace> -o <output-dir> -i <schema_1> ... <schema_n>" << endl;
     cerr << " -v\tVerbose mode" << endl;
     cerr << " -s\tSimulate generation but don't write anything to disk" << endl;
     cerr << " -p\tProvide namespace" << endl;
@@ -847,8 +847,8 @@ int main_wrapper(int argc, char** argv) {
                       std::filesystem::copy_file(path + "/lib/XMLObject.cpp",outputDir + "/XMLObject.cpp");
                   }
                   if (verbose) {
-                    cerr << "C " << outputDir + "/XMLObject.h" << endl;
-                    cerr << "C " << outputDir + "/XMLObject.cpp" << endl;
+                     cerr << "C " << outputDir + "/XMLObject.h" << endl;
+                     cerr << "C " << outputDir + "/XMLObject.cpp" << endl;
                   }
                   copied = true;
                   files_changed = true;

@@ -20,6 +20,7 @@ typedef std::string Namespace;
 typedef std::string AttributeName;
 typedef std::string AttributeValue;
 struct Attribute {
+  Namespace xmlns;
   Namespace prefix;
   AttributeName name;
   AttributeValue value;
@@ -35,9 +36,11 @@ struct Attribute {
 typedef std::vector<Attribute> Attributes;
 typedef std::vector<std::unique_ptr<XMLObject>> Children;
 
-template<typename T> XMLObject* createInstance(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent) { return new T(className, element, parent, T::defaults); } /// Template function used to store in factory
+/// Template function used to store in factory
+template<typename T> XMLObject* createInstance(const Namespace& xmlns, const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent) { return new T(xmlns, className, element, parent, T::defaults); } 
 
-typedef std::unordered_map<ElementName, XMLObject* (*)(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent)> Factory; /// Factory used to create instance depending on element name
+/// Factory used to create instance depending on element name
+typedef std::unordered_map<ElementName, XMLObject* (*)(const Namespace& xmlns, const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent)> Factory; 
 
 
 /**
@@ -49,10 +52,11 @@ typedef std::unordered_map<ElementName, XMLObject* (*)(const ClassName& classNam
  * - XMLObject::createFromFile(filename)
  *
  * Each instance has a
+ * - xmlns: refers to the XML namespace
  * - className: refers to the class it belong to
  * - elementName: refers to the name used in the XML
- * - prefix (optional): refers to the namespace prefix in the XML (or empty if no namespace is given): 
- * - attributes: a list of attributes containing the namespace prefix, the attribute name, and the attribute value
+ * - prefix (optional): refers to the namespace prefix in the XML 
+ * - attributes: a list of attributes containing the namespace, prefix, attribute name, and attribute value
  * - children: a list of child elements
  * - parent: a pointer to the parent element (or nullptr is root element) 
  *
@@ -72,13 +76,12 @@ protected:
 
 
 
-template<typename T> friend XMLObject* createInstance(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent); 
+template<typename T> friend XMLObject* createInstance(const Namespace& xmlns, const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent); 
 
 protected:
-  XMLObject(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent, const Attributes& defaultAttributes);
+  XMLObject(const Namespace& xmlns, const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent, const Attributes& defaultAttributes);
 
   inline static Factory factory;
-  inline static Attribute _attribute_; ///> placeholder to be used for temporary initialization of references
 public:
   template<typename T> bool is() {
     return ( dynamic_cast<T*>(this) != nullptr );
@@ -94,9 +97,10 @@ public:
 
 
 
+  Namespace xmlns; 
+  const ClassName className;
   Namespace prefix;
   ElementName elementName;
-  const ClassName className;
 
   XMLObject* parent;
   TextContent textContent; ///< textual content of XML element without children

@@ -18,24 +18,24 @@
 # limitations under the License.
 
 cmake_minimum_required(VERSION 3.1)
-project(schematicpp)
+project(schematic++)
 
 set(CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR})
 
-add_executable(schematicpp
+add_executable(schematic++
     main.cpp
     XercesString.cpp
     Class.cpp
     BuiltInClasses.cpp
 )
 
-target_link_libraries(schematicpp)
+target_link_libraries(schematic++)
 
 # Account for the Xerces-C++ 3.1.x library being called xerces-c_3 on WIN32
 if(WIN32)
-    target_link_libraries(schematicpp xerces-c_3)
+    target_link_libraries(schematic++ xerces-c_3)
 else(WIN32)
-    target_link_libraries(schematicpp xerces-c)
+    target_link_libraries(schematic++ xerces-c)
 endif(WIN32)

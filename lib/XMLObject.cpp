@@ -2,6 +2,7 @@
 #include <xercesc/parsers/XercesDOMParser.hpp>
 #include <xercesc/util/BinInputStream.hpp>
 #include <xercesc/sax/InputSource.hpp>
+#include <iostream>
 
 namespace XML {
 
@@ -67,31 +68,31 @@ XMLObject* XMLObject::createFromFile(std::string& filename) {
 
 
 XMLObject* XMLObject::createObject(const xercesc::DOMElement* element, XMLObject* parent) {
+  Namespace xmlns = xercesc::XMLString::transcode(element->getNamespaceURI());
   ElementName elementName = xercesc::XMLString::transcode(element->getLocalName());
-  if ( auto it = factory.find(elementName); it != factory.end() ) { 
-    return it->second(elementName, element, parent); 
+  if ( auto it = factory.find(xmlns + ":" + elementName); it != factory.end() ) { 
+    return it->second(xmlns, elementName, element, parent); 
   }
   // std::cout << "Unknown element '" << elementName << "' using 'XMLObject' instead" << std::endl;
-  return createInstance<XMLObject>("XMLObject", element, parent);
+  return createInstance<XMLObject>(xmlns, "XMLObject", element, parent);
 }
 
-XMLObject::XMLObject(const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent, const Attributes& defaultAttributes) : className(className), parent(parent) {
+XMLObject::XMLObject(const Namespace& xmlns, const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent, const Attributes& defaultAttributes) : xmlns(xmlns), className(className), parent(parent) {
 
-  elementName = xercesc::XMLString::transcode(element->getLocalName());
   prefix = xercesc::XMLString::transcode(element->getPrefix());
+  elementName = xercesc::XMLString::transcode(element->getLocalName());
 
   // set attributes
   xercesc::DOMNamedNodeMap* elementAttributes = element->getAttributes();
   for (XMLSize_t i = 0; i < elementAttributes->getLength(); i++) {
     xercesc::DOMNode* item = elementAttributes->item(i);
-    Namespace attributePrefix = "";
-    AttributeName attributeName = xercesc::XMLString::transcode(item->getNodeName());
-    if ( auto pos = attributeName.find(":"); pos != std::string::npos ) {
-      attributePrefix = attributeName.substr(0, pos);
-      attributeName.erase(0, pos + 1);
-    }
+    
+    AttributeName attributeName = xercesc::XMLString::transcode(item->getLocalName());
+    // get namespace from atrribute or parent element
+    Namespace attributeXmlns = item->getNamespaceURI() ? xercesc::XMLString::transcode(item->getNamespaceURI()) : xmlns;
+    Namespace attributePrefix = item->getPrefix() ? xercesc::XMLString::transcode(item->getPrefix()) : "";
     AttributeValue attributeValue = xercesc::XMLString::transcode(item->getNodeValue());
-    attributes.push_back( { attributePrefix, attributeName, attributeValue } );
+    attributes.push_back( { attributeXmlns, attributePrefix, attributeName, attributeValue } );
   }
 
   // add defaults for missing attributes
@@ -103,7 +104,7 @@ XMLObject::XMLObject(const ClassName& className, const xercesc::DOMElement* elem
 
   // set children
   for (xercesc::DOMElement *childElement = element->getFirstElementChild(); childElement; childElement = childElement->getNextElementSibling()) {
-    ElementName childName = xercesc::XMLString::transcode(childElement->getLocalName());
+//    ElementName childName = xercesc::XMLString::transcode(childElement->getLocalName());
     children.push_back(std::unique_ptr<XMLObject>(createObject(childElement,this)));
   }
 
@@ -112,33 +113,34 @@ XMLObject::XMLObject(const ClassName& className, const xercesc::DOMElement* elem
   }
 }
 
-  XMLObject& XMLObject::getRequiredChildByName(const ElementName& elementName) {
-    for ( auto& child : children ) {
-      if ( child->elementName == elementName ) {
-        return *child;
-      }
-    }
-    throw std::runtime_error("Failed to get required child of element '" + elementName + "'");
-  }
 
-  std::optional< std::reference_wrapper<XMLObject> > XMLObject::getOptionalChildByName(const ElementName& elementName) {
-    for ( auto& child : children ) {
-      if ( child->elementName == elementName ) {
-        return *child;
-      }
+XMLObject& XMLObject::getRequiredChildByName(const ElementName& elementName) {
+  for ( auto& child : children ) {
+    if ( child->elementName == elementName ) {
+      return *child;
     }
-    return std::nullopt;
   }
+  throw std::runtime_error("Failed to get required child of element '" + elementName + "'");
+}
 
-  std::vector< std::reference_wrapper<XMLObject> > XMLObject::getChildrenByName(const ElementName& elementName) {
-    std::vector< std::reference_wrapper<XMLObject> > result;
-    for ( auto& child : children ) {
-      if ( child->elementName == elementName ) {
-        result.push_back(*child);
-      }
+std::optional< std::reference_wrapper<XMLObject> > XMLObject::getOptionalChildByName(const ElementName& elementName) {
+  for ( auto& child : children ) {
+    if ( child->elementName == elementName ) {
+      return *child;
     }
-    return result;
   }
+  return std::nullopt;
+}
+
+std::vector< std::reference_wrapper<XMLObject> > XMLObject::getChildrenByName(const ElementName& elementName) {
+  std::vector< std::reference_wrapper<XMLObject> > result;
+  for ( auto& child : children ) {
+    if ( child->elementName == elementName ) {
+      result.push_back(*child);
+    }
+  }
+  return result;
+}
 
 Attribute& XMLObject::getRequiredAttributeByName(const AttributeName& attributeName) {
   auto it = std::find_if(attributes.begin(), attributes.end(), 
