@@ -17,7 +17,7 @@ int main(void) {
   
   vector< reference_wrapper<tProcess> > processes = root->getChildren<tProcess>();
   
-  cout << "Model has " << processes.size() << " processes:" << endl;
+  cout << "Model has " << processes.size() << " process(es):" << endl;
   for ( tProcess& process : processes ) {
     optional< reference_wrapper<Attribute> > processId = process.id;
     cout << "- Process";
@@ -42,7 +42,7 @@ int main(void) {
         cout << " without id";
       }
       
-      cout << " has " << node.incoming.size() << " incoming and " << node.outgoing.size() << " outgoing arcs." << endl;
+      cout << " has " << node.incoming.size() << " incoming and " << node.outgoing.size() << " outgoing arc(s)." << endl;
       for ( XMLObject& incoming : node.incoming ) {
         cout << "    - incoming: " << incoming.textContent << endl;
       }
@@ -50,7 +50,7 @@ int main(void) {
         cout << "    - outgoing: " << outgoing.textContent << endl;
       }
     }
-    cout << process << endl;
+    cout << "- XML: " << process << endl;
     cout << endl;
   }
 
