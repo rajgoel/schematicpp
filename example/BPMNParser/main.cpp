@@ -12,8 +12,13 @@ using namespace std;
 using namespace XML;
 using namespace XML::BPMN;
 
-int main(void) {
-  unique_ptr<XML::XMLObject> root(XML::XMLObject::createFromStream(std::cin));
+int main(int argc, char **argv) {
+  if ( argc != 2 ) {
+    cout << "Usage: " << argv[0] << " <bpmn-file>" << endl;
+    return 0;
+  }
+
+  unique_ptr<XML::XMLObject> root(XML::XMLObject::createFromFile(argv[1]));
   
   vector< reference_wrapper<tProcess> > processes = root->getChildren<tProcess>();
   

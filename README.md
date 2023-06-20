@@ -94,5 +94,5 @@ g++ -std=c++20 main.cpp XMLObject.cpp BPMN/*.cpp  -L./lib  -lBPMNParser  -lxerce
 You can run the executable by
 ```sh
 cd example
-./BPMNParser/bpmnParser  < diagram.bpmn
+./BPMNParser/bpmnParser diagram.bpmn
 ```
