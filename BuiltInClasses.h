@@ -38,6 +38,7 @@ public:\
     name() : BuiltInClass(xslName) {}\
     name(std::string xslOverride) : BuiltInClass(xslOverride) {}\
     std::string getClassname() const {return classname;}\
+    std::string getCppClassname() const {return classname;}\
     bool hasHeader() const { return false; }\
 };
 
