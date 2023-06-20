@@ -123,21 +123,21 @@ protected:
 
   inline static Factory factory;
 public:
-/**
- * Check if the current instance can be casted to the specified type T.
- * Returns true if the cast is successful, indicating that the current
- * instance is of type T. Otherwise, returns false.
- */
+  /**
+   * Check if the current instance can be casted to the specified type T.
+   * Returns true if the cast is successful, indicating that the current
+   * instance is of type T. Otherwise, returns false.
+   */
   template<typename T> bool is() {
     return ( dynamic_cast<T*>(this) != nullptr );
   }
 
-/**
- * Attempt to cast the current instance to the specified type T.
- * If the cast is successful, returns a pointer to the casted object.
- * If the cast fails, throws a std::runtime_error with an error message
- * indicating an illegal cast operation.
- */
+  /**
+   * Attempt to cast the current instance to the specified type T.
+   * If the cast is successful, returns a pointer to the casted object.
+   * If the cast fails, throws a std::runtime_error with an error message
+   * indicating an illegal cast operation.
+   */
   template<typename T> T* get() {
     T* ptr = dynamic_cast<T*>(this); 
     if ( ptr == nullptr ) {
@@ -146,7 +146,31 @@ public:
     return ptr; 
   };
 
+protected:
+  template<typename T>
+  void findRecursive(std::vector<std::reference_wrapper<T> >& result, const Children& descendants)
+  {
+    for (auto& descendant : descendants) {
+      if (descendant->is<T>()) {
+        result.push_back(*descendant->get<T>());
+      }
+      findRecursive(result, descendant->children );
+    }
+  }
 
+public:
+  /**
+   * Find all descendants of type T.
+   *
+   * @return A vector of references to decendants of type T.
+   */
+  template<typename T>
+  std::vector<std::reference_wrapper<T> > find()
+  {
+    std::vector<std::reference_wrapper<T> > result;
+    findRecursive(result, children);
+    return result;
+  }
 
   Namespace xmlns; 
   const ClassName className;
