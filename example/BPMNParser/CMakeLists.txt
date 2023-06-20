@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.1)
 project(BPMNParser)
 
-# List of projects and headers to be included
-set(PROJECTS "BPMN") 
+# List of subprojects
+set(SUBPROJECTS "BPMN")
 
 # Set folder for the library to be created
 set(LIB_DIR "lib" CACHE STRING "Library directory")
@@ -28,12 +28,12 @@ file(MAKE_DIRECTORY ${LIB_DIR})
 # Create lists of all headers and sources
 set(HEADERS "XMLObject.h")
 set(SOURCES "XMLObject.cpp")
-foreach(PROJECT ${PROJECTS})
-  include(${PROJECT}/CMakeLists.txt)
-  foreach(HEADER ${${PROJECT}_HEADERS})
+foreach(SUBPROJECT ${SUBPROJECTS})
+  include(${SUBPROJECT}/CMakeLists.txt)
+  foreach(HEADER ${${SUBPROJECT}_HEADERS})
     list(APPEND HEADERS ${HEADER})
   endforeach()
-  foreach(SOURCE ${${PROJECT}_SOURCES})
+  foreach(SOURCE ${${SUBPROJECT}_SOURCES})
     list(APPEND SOURCES ${SOURCE})
   endforeach()
 endforeach()
@@ -41,8 +41,8 @@ endforeach()
 find_program(CCACHE_FOUND "ccache")
 set(CCACHE_SUPPORT ON CACHE BOOL "Enable ccache support")
 if (CCACHE_FOUND AND CCACHE_SUPPORT)
-	set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "ccache")
-	set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK "ccache")
+  set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "ccache")
+  set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK "ccache")
 endif()
 
 # Generate the single header file
@@ -66,11 +66,11 @@ add_library(${OBJECTLIB} OBJECT ${SOURCES})
 
 # Set optimization flags for the target based on the compiler
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-	target_compile_options(${OBJECTLIB} PRIVATE -O3)
+  target_compile_options(${OBJECTLIB} PRIVATE -O3)
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-	target_compile_options(${OBJECTLIB} PRIVATE -O3)
+  target_compile_options(${OBJECTLIB} PRIVATE -O3)
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-	target_compile_options(${OBJECTLIB} PRIVATE /Ox)
+  target_compile_options(${OBJECTLIB} PRIVATE /Ox)
 endif()
 
 # Create the library
