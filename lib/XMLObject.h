@@ -19,6 +19,26 @@ typedef std::string TextContent;
 typedef std::string Namespace;
 typedef std::string AttributeName;
 typedef std::string AttributeValue;
+
+/**
+ * The `Attribute` struct stores information about the namespace, prefix, name, and
+ * value of the attribute. It provides implicit conversion and assignment operators
+ * to facilitate easy conversion between different types and convenient assignment
+ * of attribute values.
+ *
+ * Example usage:
+ * Attribute attribute;
+ * attribute = "a_string";              // Assignment using a std::string.
+ * attribute = true;                    // Assignment using a bool.
+ * attribute = 42;                      // Assignment using an int.
+ * attribute = 3.14;                    // Assignment using a double.
+ *
+ * std::string stringValue = attribute; // Implicit conversion to std::string.
+ * bool booleanValue = attribute;       // Implicit conversion to bool.
+ * int integerValue = attribute;        // Implicit conversion to int.
+ * double realValue = attribute;        // Implicit conversion to double.
+ *
+ */
 struct Attribute {
   Namespace xmlns;
   Namespace prefix;
@@ -65,16 +85,36 @@ typedef std::unordered_map<ElementName, XMLObject* (*)(const Namespace& xmlns, c
 class XMLObject {
 
 public:
-	static XMLObject* createFromStream(std::istream& xmlStream);
-	static XMLObject* createFromString(std::string& xmlString);
-	static XMLObject* createFromFile(std::string& filename);
+  /**
+   * Create an XMLObject from the input stream.
+   *
+   * @param xmlStream The input stream containing the XML data.
+   * @return A pointer to the created XMLObject.
+   * @throws std::runtime_error if parsing the XML fails.
+   */	static XMLObject* createFromStream(std::istream& xmlStream);
+	static XMLObject* createFromString(const std::string& xmlString);
+
+  /**
+   * Create an XMLObject from a string representation of XML.
+   *
+   * @param xmlString The string containing the XML data.
+   * @return A pointer to the created XMLObject.
+   * @throws std::runtime_error if parsing the XML fails.
+   */
+
+  /**
+   * Create an XMLObject from an XML file.
+   *
+   * @param filename The path to the XML file.
+   * @return A pointer to the created XMLObject.
+   * @throws std::runtime_error if parsing the XML fails.
+   */
+	static XMLObject* createFromFile(const std::string& filename);
 
   virtual ~XMLObject() {};
 
 protected:
   static XMLObject* createObject(const xercesc::DOMElement* element, XMLObject* parent);
-
-
 
 template<typename T> friend XMLObject* createInstance(const Namespace& xmlns, const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent); 
 
@@ -83,10 +123,21 @@ protected:
 
   inline static Factory factory;
 public:
+/**
+ * Check if the current instance can be casted to the specified type T.
+ * Returns true if the cast is successful, indicating that the current
+ * instance is of type T. Otherwise, returns false.
+ */
   template<typename T> bool is() {
     return ( dynamic_cast<T*>(this) != nullptr );
   }
 
+/**
+ * Attempt to cast the current instance to the specified type T.
+ * If the cast is successful, returns a pointer to the casted object.
+ * If the cast fails, throws a std::runtime_error with an error message
+ * indicating an illegal cast operation.
+ */
   template<typename T> T* get() {
     T* ptr = dynamic_cast<T*>(this); 
     if ( ptr == nullptr ) {
@@ -103,13 +154,24 @@ public:
   ElementName elementName;
 
   XMLObject* parent;
-  TextContent textContent; ///< textual content of XML element without children
-  Children children; ///< child nodes of the XML element
-  Attributes attributes; /// attributes of the XML element
+  TextContent textContent; ///< Textual content of XML element without children
+  Children children; ///< Child nodes of the XML element
+  Attributes attributes; /// Attributes of the XML element
 	inline static const Attributes defaults = {};
 
+  /**
+   * Convert the XMLObject and its children to a string representation.
+   *
+   * @return The string representation of the XMLObject.
+   */
   std::string stringify() const;
 
+  /**
+   * Get a required child of type T.
+   *
+   * @return A reference to the required child.
+   * @throws std::runtime_error if the required child is not found.
+   */
   template<typename T> T& getRequiredChild() {
     for ( auto& child : children ) {
       if ( child->is<T>() ) {
@@ -119,6 +181,12 @@ public:
     throw std::runtime_error("Failed to get required child of element '" + elementName + "'");
   }
 
+  /**
+   * Get an optional child of type T.
+   *
+   * @return An optional containing a reference to the optional child if found,
+   *         or std::nullopt if the optional child is not found.
+   */
   template<typename T> std::optional< std::reference_wrapper<T> > getOptionalChild() {
     for ( auto& child : children ) {
       if ( child->is<T>() ) {
@@ -128,6 +196,11 @@ public:
     return std::nullopt;
   }
 
+  /**
+   * Get all children of type T.
+   *
+   * @return A vector of references to the children of type T.
+   */
   template<typename T> std::vector< std::reference_wrapper<T> > getChildren() {
     std::vector< std::reference_wrapper<T> > result;
     for ( auto& child : children ) {
@@ -138,11 +211,48 @@ public:
     return result;
   }
 
+  /**
+   * Get a required child with the specified element name.
+   *
+   * @param elementName The name of the child element without namespace prefix.
+   * @return A reference to the required child.
+   * @throws std::runtime_error if the required child is not found.
+   */
   XMLObject& getRequiredChildByName(const ElementName& elementName);
+
+  /**
+   * Get the optional child with the specified element name.
+   *
+   * @param elementName The name of the child element without namespace prefix.
+   * @return An optional containing a reference to the optional child if found,
+   *         or std::nullopt if the optional child is not found.
+   */
   std::optional< std::reference_wrapper<XMLObject> > getOptionalChildByName(const ElementName& elementName);
+
+  /**
+   * Get all children with the specified element name.
+   *
+   * @param elementName The name of the child elements without namespace prefix.
+   * @return A vector of references to the children with the specified element name.
+   */
   std::vector< std::reference_wrapper<XMLObject> > getChildrenByName(const ElementName& elementName);
 
+  /**
+   * Get a required attribute with the specified attribute name.
+   *
+   * @param attributeName The name of the attribute without namespace prefix.
+   * @return A reference to the required attribute.
+   * @throws std::runtime_error if the required attribute is not found.
+   */
   Attribute& getRequiredAttributeByName(const AttributeName& attributeName);
+
+  /**
+   * Get an optional attribute with the specified attribute name.
+   *
+   * @param attributeName The name of the attribute without namespace prefix.
+   * @return An optional containing a reference to the optional attribute if found,
+   *         or std::nullopt if the optional attribute is not found.
+   */
   std::optional< std::reference_wrapper<Attribute> > getOptionalAttributeByName(const AttributeName& attributeName);
 
 

@@ -54,16 +54,30 @@ XMLObject* XMLObject::createFromStream(std::istream& xmlStream) {
   return object;
 };
 
-XMLObject* XMLObject::createFromString(std::string& xmlString) {
+XMLObject* XMLObject::createFromString(const std::string& xmlString) {
   // std::cout << "Create XML object from string" << std::endl;
   std::istringstream iss(xmlString);
   return createFromStream(iss);
 }
 
-XMLObject* XMLObject::createFromFile(std::string& filename) {
+XMLObject* XMLObject::createFromFile(const std::string& filename) {
   // std::cout << "Create XML object from file" << std::endl;
-  throw std::runtime_error("Not yet implemented!");
-  return nullptr;
+  xercesc::XMLPlatformUtils::Initialize();
+  std::unique_ptr<xercesc::XercesDOMParser> parser = std::make_unique<xercesc::XercesDOMParser>();
+  parser->setDoNamespaces(true);
+  parser->parse(xercesc::XMLString::transcode(filename.c_str()));
+
+  xercesc::DOMDocument* document = parser->getDocument();
+  if(!document) throw std::runtime_error("Failed to parse XML");
+
+  xercesc::DOMElement* rootElement = document->getDocumentElement();
+  if(!rootElement) throw std::runtime_error("Failed to get root element of XML");
+
+  std::string rootName =  xercesc::XMLString::transcode(rootElement->getLocalName());
+  XMLObject* object = createObject(rootElement, nullptr);
+  parser.reset(); // delete unique_ptr to parser before calling Terminate
+  xercesc::XMLPlatformUtils::Terminate();
+  return object;
 }
 
 
