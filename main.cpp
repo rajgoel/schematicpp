@@ -650,39 +650,8 @@ string generateCMakeLists() {
     }
 
     ostringstream oss;
-/*
-    oss << "cmake_minimum_required(VERSION 3.1)" << endl;
-    oss << "project(" << cppNamespace << ")" << endl;
-
-    oss << "# Set the C++ standard (change as needed)" << endl;
-    oss << "set(CMAKE_CXX_STANDARD 20)" << endl;
-    oss << endl;
-
-    oss << "# Filename of main" << endl;
-    oss << "set(SRC \"${PROJECT_SOURCE_DIR}/main.cpp\" CACHE STRING \"Name of source file\")" << endl;
-    oss << "# Filename of executable" << endl;
-    oss << "set(EXE \"\" CACHE STRING \"Name of executable to be built\")" << endl;
-    oss << "if ( NOT EXE )" << endl;
-    oss << "\tget_filename_component(EXE ${SRC} NAME_WE)" << endl;
-    oss << "endif()" << endl;
-    oss << endl;
-
-    oss << "# Set output directories" << endl;
-    oss << "set(LIB_DIR \"lib\" CACHE STRING \"Library directory\")" << endl;
-    oss << "set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/${LIB_DIR})" << endl;
-    oss << "set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR})" << endl;
-    oss << endl;
-
-    oss << "find_program(CCACHE_FOUND \"ccache\")" << endl;
-    oss << "set(CCACHE_SUPPORT ON CACHE BOOL \"Enable ccache support\")" << endl;
-    oss << "if (CCACHE_FOUND AND CCACHE_SUPPORT)" << endl;
-    oss << "\tset_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE \"ccache\")" << endl;
-    oss << "\tset_property(GLOBAL PROPERTY RULE_LAUNCH_LINK \"ccache\")" << endl;
-    oss << "endif()" << endl;
-    oss << endl;
-*/
     oss << "set(" << cppNamespace << "_SOURCES" << endl;
-//    oss << "\tXMLObject.cpp" << endl;
+
     for (auto c : sorted) {
         if (!c->isSimple()) {
             oss << "\t" << cppNamespace << "/" << c->getClassname() << ".cpp" << endl;
@@ -692,65 +661,13 @@ string generateCMakeLists() {
     oss << endl;
 
     oss << "set(" << cppNamespace << "_HEADERS" << endl;
-//    oss << "\tXMLObject.h" << endl;
+
     for (auto c : sorted) {
         if (!c->isSimple()) {
             oss << "\t" << cppNamespace << "/" << c->getClassname() << ".h" << endl;
         }
     }
     oss << ")" << endl;
-/*
-    oss << endl;
-
-    oss << "# Create output directory for the library" << endl;
-    oss << "file(MAKE_DIRECTORY ${LIB_DIR})" << endl;
-    oss << endl;
-
-    oss << "# Generate the single header file" << endl;
-    oss << "set(SINGLE_HEADER_PATH \"${LIB_DIR}/${CMAKE_PROJECT_NAME}.h\")" << endl;
-    oss << "file(WRITE ${SINGLE_HEADER_PATH} \"// Automatically generated single header file\\n\")" << endl;
-    oss << "foreach(HEADER ${HEADERS})" << endl;
-    oss << "\tfile(READ ${HEADER} HEADER_CONTENTS)" << endl;
-    oss << "\tstring(REGEX REPLACE \"#include \\\".*\\\"\\n\" \"\" HEADER_CONTENTS \"${HEADER_CONTENTS}\")" << endl;
-    oss << "\tfile(APPEND ${SINGLE_HEADER_PATH} \"${HEADER_CONTENTS}\")" << endl;
-    oss << "endforeach()" << endl;
-    oss << endl;
-
-    oss << "# Create the object library" << endl;
-    oss << "set(LIB \"${CMAKE_PROJECT_NAME}\")" << endl;
-    oss << "set(OBJECTLIB \"${LIB}_OBJECTS\")" << endl;
-    oss << "add_library(${OBJECTLIB} OBJECT ${SOURCES})" << endl;
-    oss << endl;
-
-    oss << "# Set optimization flags for the target based on the compiler" << endl;
-    oss << "if (CMAKE_CXX_COMPILER_ID STREQUAL \"GNU\")" << endl;
-    oss << "\ttarget_compile_options(${OBJECTLIB} PRIVATE -O3)" << endl;
-    oss << "elseif (CMAKE_CXX_COMPILER_ID STREQUAL \"Clang\")" << endl;
-    oss << "\ttarget_compile_options(${OBJECTLIB} PRIVATE -O3)" << endl;
-    oss << "elseif (CMAKE_CXX_COMPILER_ID STREQUAL \"MSVC\")" << endl;
-    oss << "\ttarget_compile_options(${OBJECTLIB} PRIVATE /Ox)" << endl;
-    oss << "endif()" << endl;
-    oss << endl;
-
-    oss << "# Create the library" << endl;
-    oss << "add_library(${LIB} STATIC $<TARGET_OBJECTS:${OBJECTLIB}>)" << endl;
-    oss << endl;
-
-    oss << "# Create the executable" << endl;
-    oss << "if(\"${EXE}\" STREQUAL \"${LIB}\")" << endl;
-    oss << "\tmessage(SEND_ERROR \"Executable must not have the same name as the library: ${LIB}\")" << endl;
-    oss << "elseif( NOT EXISTS ${SRC} )" << endl;
-    oss << "\tmessage(SEND_ERROR \"Source file not found: ${SRC}\")" << endl;
-    oss << "else()" << endl;
-    oss << "\tmessage(STATUS \"Build ${EXE} using ${SRC}\")" << endl;
-    oss << "\tadd_executable(${EXE} ${SRC} $<TARGET_OBJECTS:${OBJECTLIB}>)" << endl;
-    oss << "\ttarget_link_libraries(${EXE} ${LIB} xerces-c)" << endl;
-    oss << "endif()" << endl;
-    oss << endl;
-
-    oss << "unset(SRC CACHE)" << endl;
-    oss << "unset(EXE CACHE)" << endl;
-*/
     return oss.str();
 }
 
