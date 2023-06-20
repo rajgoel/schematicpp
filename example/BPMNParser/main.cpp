@@ -1,4 +1,4 @@
-#include "lib/BPMN.h"
+#include "lib/BPMNParser.h"
 #include <iostream>
 #include <sstream>
 
@@ -10,6 +10,7 @@
 using namespace xercesc;
 using namespace std;
 using namespace XML;
+using namespace XML::BPMN;
 
 int main(void) {
   unique_ptr<XML::XMLObject> root(XML::XMLObject::createFromStream(std::cin));

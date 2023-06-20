@@ -55,7 +55,7 @@ static void printUsage() {
     cerr << "USAGE: schematic++ [-v] [-s] -n <namespace> -o <output-dir> -i <schema_1> ... <schema_n>" << endl;
     cerr << " -v\tVerbose mode" << endl;
     cerr << " -s\tSimulate generation but don't write anything to disk" << endl;
-    cerr << " -p\tProvide namespace" << endl;
+    cerr << " -n\tProvide C++ namespace" << endl;
     cerr << " -o\tProvide output directory" << endl;
     cerr << " -i\tProvide list of XML schema definition files" << endl;
     cerr << endl;
