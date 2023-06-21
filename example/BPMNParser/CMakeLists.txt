@@ -55,6 +55,18 @@ foreach(HEADER ${HEADERS})
   file(APPEND ${SINGLE_HEADER_PATH} "${HEADER_CONTENTS}")
 endforeach()
 
+# Generate the documentation
+find_program(DOXYGEN_FOUND "doxygen")
+set(DOCUMENTATION ON CACHE BOOL "Create documentation")
+if (DOXYGEN_FOUND AND DOCUMENTATION)
+  # Add Doxygen target
+  add_custom_target(docs
+    COMMAND doxygen ${PROJECT_SOURCE_DIR}/Doxyfile
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    COMMENT "Generating Doxygen documentation (this may take a while)"
+    VERBATIM
+  )
+endif()
 
 # Set the C++ standard
 set(CMAKE_CXX_STANDARD 20)
@@ -78,6 +90,6 @@ add_library(${LIB} STATIC $<TARGET_OBJECTS:${OBJECTLIB}>)
 
 # Create the executable
 if (MAIN AND EXE)
-  add_executable(${EXE} ${MAIN} $<TARGET_OBJECTS:${OBJECTLIB}>)
+  add_executable(${EXE} ${MAIN})
   target_link_libraries(${EXE} ${LIB} xerces-c)
 endif()

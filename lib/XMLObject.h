@@ -91,8 +91,8 @@ public:
    * @param xmlStream The input stream containing the XML data.
    * @return A pointer to the created XMLObject.
    * @throws std::runtime_error if parsing the XML fails.
-   */	static XMLObject* createFromStream(std::istream& xmlStream);
-	static XMLObject* createFromString(const std::string& xmlString);
+   */
+	static XMLObject* createFromStream(std::istream& xmlStream);
 
   /**
    * Create an XMLObject from a string representation of XML.
@@ -101,6 +101,7 @@ public:
    * @return A pointer to the created XMLObject.
    * @throws std::runtime_error if parsing the XML fails.
    */
+	static XMLObject* createFromString(const std::string& xmlString);
 
   /**
    * Create an XMLObject from an XML file.
