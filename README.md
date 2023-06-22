@@ -1,7 +1,7 @@
 # schematic++
 ## An XML schema compiler for C++, written in C++.
 
-Forked from [https://github.com/Tjoppen/james](https://github.com/Tjoppen/james/tree/9a7be3a89048069ec06d2f08d2fe79be1999e16c) and partly rewritten.
+Forked from [https://github.com/Tjoppen/james](https://github.com/Tjoppen/james/tree/9a7be3a89048069ec06d2f08d2fe79be1999e16c) and partly rewritten to produce a simple class structure using c++20 features.
 
 ## Purpose/goals
 The purpose of this program is to transform a subset of XML schema defintions into C++ code for marshalling and unmarshalling documents conforming to one or more schemas. The generated code should not be needlessly complicated (no getters or setters). The number of dependencies should be kept to a minimum.
