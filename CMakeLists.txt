@@ -25,10 +25,10 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR})
 
 add_executable(schematic++
-    main.cpp
-    XercesString.cpp
-    Class.cpp
-    BuiltInClasses.cpp
+    src/main.cpp
+    src/XercesString.cpp
+    src/Class.cpp
+    src/BuiltInClasses.cpp
 )
 
 target_link_libraries(schematic++)
