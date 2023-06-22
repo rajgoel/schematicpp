@@ -10,7 +10,7 @@
 using namespace xercesc;
 using namespace std;
 using namespace XML;
-using namespace XML::BPMN;
+using namespace XML::bpmn;
 
 int main(int argc, char **argv) {
   if ( argc != 2 ) {

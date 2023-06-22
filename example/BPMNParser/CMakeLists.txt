@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.1)
 project(BPMNParser)
 
 # List of subprojects
-set(SUBPROJECTS "BPMN")
+set(SUBPROJECTS "bpmn")
 
 # Set folder for the library to be created
 set(LIB_DIR "lib" CACHE STRING "Library directory")

@@ -1,7 +1,7 @@
 # schematic++
 ## An XML schema compiler for C++, written in C++.
 
-Forked from https://github.com/Tjoppen/james on June 6, 2023
+Forked from [https://github.com/Tjoppen/james](https://github.com/Tjoppen/james/tree/9a7be3a89048069ec06d2f08d2fe79be1999e16c) and partly rewritten.
 
 ## Purpose/goals
 The purpose of this program is to transform a subset of XML schema defintions into C++ code for marshalling and unmarshalling documents conforming to one or more schemas. The generated code should not be needlessly complicated (no getters or setters). The number of dependencies should be kept to a minimum.
@@ -73,10 +73,10 @@ You can create the classes corresponding to the provided XML schemas by
 # Go to example directory
 cd example
 # Build classes from XML schemas
-../schematic++ -v -n BPMN -o BPMNParser -i DC.xsd DI.xsd BPMNDI.xsd Semantic.xsd BPMN20.xsd
+../schematic++ -v -n bpmn -o BPMNParser -i DC.xsd DI.xsd BPMNDI.xsd Semantic.xsd BPMN20.xsd
 ```
 After this step, the files `XMLObject.h` and `XMLObject.cpp` should have been copied into the `BPMNParser` folder. If not, you should copy these manually from the `lib` folder.
-The generated classes should have been created in the `BPMNParser/BPMN`.
+The generated classes should have been created in the `BPMNParser/bpmn`.
 
 ### Build library only
 
@@ -107,7 +107,7 @@ Once the library is built, you can manually create an executable by
 
 ```sh
 cd BPMNParser
-g++ -std=c++20 main.cpp XMLObject.cpp BPMN/*.cpp  -L./lib  -lBPMNParser  -lxerces-c -o bpmnParser
+g++ -std=c++20 main.cpp XMLObject.cpp bpmn/*.cpp  -L./lib  -lBPMNParser  -lxerces-c -o bpmnParser
 ```
 ### Runing the executable
 
