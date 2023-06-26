@@ -1,7 +1,5 @@
 # File:   CMakeLists.txt
-# Authors: Asvin Goel (rajgoel), Tomas Härdin (tjoppen)
-#
-# Forked from: https://github.com/Tjoppen/james (June 6, 2023)
+# Authors: Asvin Goel (rajgoel)
 #
 # LICENSE:
 #

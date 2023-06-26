@@ -125,12 +125,12 @@ void Class::writeImplementation(ostream& os) const {
     os << endl;
 
     if (!isSimple()) {
-      os << getCppClassname() << "::" << getCppClassname() << "(const Namespace& xmlns, const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent, const Attributes& defaultAttributes) :" << endl;
+      os << getCppClassname() << "::" << getCppClassname() << "(const Namespace& xmlns, const ClassName& className, const xercesc::DOMElement* element, const Attributes& defaultAttributes) :" << endl;
       if (base) {
-        os << "\t" << base->getCppClassname() << "(xmlns, className, element, parent, defaultAttributes)" << endl;
+        os << "\t" << base->getCppClassname() << "(xmlns, className, element, defaultAttributes)" << endl;
       }
       else {
-        os << "\tXMLObject(xmlns, className, element, parent, defaultAttributes)" << endl;
+        os << "\tXMLObject(xmlns, className, element, defaultAttributes)" << endl;
       }
       //member initialization
       for (list<Member>::const_iterator it = members.begin(); it != members.end(); it++) {
@@ -253,7 +253,7 @@ void Class::writeHeader(ostream& os) const {
 
         os << " {" << endl;
 
-        os << "\ttemplate<typename T> friend XMLObject* ::XML::createInstance(const Namespace& xmlns, const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent);" << endl; 
+        os << "\ttemplate<typename T> friend XMLObject* ::XML::createInstance(const Namespace& xmlns, const ClassName& className, const xercesc::DOMElement* element);" << endl; 
 
         os << "private:" << endl;
 
@@ -263,7 +263,7 @@ void Class::writeHeader(ostream& os) const {
         os << "\t};" << endl;
         os << "\tinline static bool registered = registerClass();" << endl;
         os << "protected:" << endl;
-        os << "\t" << cppName << "(const Namespace& xmlns, const ClassName& className, const xercesc::DOMElement* element, XMLObject* parent, const Attributes& defaultAttributes);" << endl;
+        os << "\t" << cppName << "(const Namespace& xmlns, const ClassName& className, const xercesc::DOMElement* element, const Attributes& defaultAttributes);" << endl;
         os << endl;
 
         if (friends.size()) {
