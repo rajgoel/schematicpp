@@ -24,6 +24,11 @@ add_definitions(-DVERSION="${CMAKE_PROJECT_VERSION}")
 
 set(CMAKE_CXX_STANDARD 17)
 
+find_library(XERCES_LIB xerces-c)
+if(NOT XERCES_LIB)
+  message(FATAL_ERROR "xerces-c library not found.\nTo install run: sudo apt install libxerces-c-dev")
+endif()
+
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR})
 
 set(OUTPUT_BASE_CLASS "${PROJECT_SOURCE_DIR}/src/BaseClass.h")
@@ -45,14 +50,7 @@ add_executable(schematic++
     src/BuiltInClasses.cpp
 )
 
-target_link_libraries(schematic++)
-
-# Account for the Xerces-C++ 3.1.x library being called xerces-c_3 on WIN32
-if(WIN32)
-    target_link_libraries(schematic++ xerces-c_3)
-else(WIN32)
-    target_link_libraries(schematic++ xerces-c)
-endif(WIN32)
+target_link_libraries(schematic++ xerces-c)
 
 install(TARGETS schematic++)
 
