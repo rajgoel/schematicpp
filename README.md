@@ -21,7 +21,14 @@ The program is built like a typical CMake project. A normal build will look some
  ~/schematicpp$ mkdir build
  ~/schematicpp$ cd build
  ~/schematicpp/build$ cmake ..
+
  ~/schematicpp/build$ make
+ ```
+## Install the program
+After building the program, it can be installed by
+
+```
+~/schematicpp/build$ sudo make install
 ```
 
 ## A short guide to usage
@@ -29,6 +36,8 @@ The program is built like a typical CMake project. A normal build will look some
 Running the program without arguments produces the following usage information:
 
 ```
+schematic++ v[VERSIONNUMBER]
+
 USAGE: schematic++ [-v] [-s] -n <namespace> -o <output-dir> -i <schema_1> ... <schema_n>
  -v	Verbose mode
  -s	Simulate generation but don't write anything to disk
@@ -39,10 +48,11 @@ USAGE: schematic++ [-v] [-s] -n <namespace> -o <output-dir> -i <schema_1> ... <s
  Generates C++ classes for marshalling and unmarshalling XML to C++ objects according to the given schemas.
 ```
 
-The program parses the XML schema definition files in the given order and creates the files `<type>.cpp` and `<type>.h` for each type defined. These files are stored in the folder `<outputdir>/<namespace>/`.  
-Furthermore, it generates a file `CMakeLists.txt` that populates the CMake variables `<namespace>_SOURCES` and `<namespace>_HEADERS`. When using CMake, these variables can be set by using the command `include(<namespace>/CMakeLists.txt)` within a `CMakeLists.txt` located in your `<outputdir>` folder.
+The program parses the XML schema definition files in the given order and creates the files `<type>.cpp` and `<type>.h` for each type defined. These files can be found in the folder `<outputdir>/<namespace>/`.
+All classes generated are derived from a base class `XMLObject` which can be found in the folder `<outputdir>/`.  
 
-All classes generated are derived from a base class `XMLObject`. The program attempts to copy the files `XMLObject.cpp` and `XMLObject.h` from the `lib` directory of the program to the `<outputdir>` folder. If the program cannot find these files, a warning is displayed and the files must be copied manually.
+Furthermore, the program generates a file `CMakeLists.txt` that populates the CMake variables `<namespace>_SOURCES` and `<namespace>_HEADERS`. When using CMake, these variables can be set by using the command `include(<namespace>/CMakeLists.txt)` within a `CMakeLists.txt` located in your `<outputdir>` folder.
+
 
 In your application you have three possibilities to create an XML object:
 

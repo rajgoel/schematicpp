@@ -46,12 +46,15 @@
 #include "XercesString.h"
 #include "Class.h"
 #include "BuiltInClasses.h"
+#include "BaseClass.h"
 
 using namespace std;
 using namespace xercesc;
 using namespace schematicpp;
 
 static void printUsage() {
+    cerr << "schematic++ v" << VERSION << endl;
+    cerr << endl;
     cerr << "USAGE: schematic++ [-v] [-s] -n <namespace> -o <output-dir> -i <schema_1> ... <schema_n>" << endl;
     cerr << " -v\tVerbose mode" << endl;
     cerr << " -s\tSimulate generation but don't write anything to disk" << endl;
@@ -749,37 +752,6 @@ int main_wrapper(int argc, char** argv) {
         std::filesystem::create_directory(outputDir);
         std::filesystem::create_directory(outputDir + "/" + cppNamespace );
 
-
-        // copy XMLObject.h and XMLObject.h if necessary
-        if ( !std::filesystem::exists(outputDir + "/XMLObject.h")
-             || !std::filesystem::exists(outputDir + "/XMLObject.cpp") ) {
-            bool copied = false;
-            std::size_t pos = program.find_last_of("/");
-            if ( pos !=  std::string::npos ) {
-              std::string path = program.substr(0,pos+1);
-              if ( std::filesystem::exists(path + "/lib/XMLObject.h")
-                   && std::filesystem::exists(path + "/lib/XMLObject.cpp") ) {
-                  if (!dry_run) {
-                      std::filesystem::copy_file(path + "/lib/XMLObject.h",outputDir + "/XMLObject.h");
-                      std::filesystem::copy_file(path + "/lib/XMLObject.cpp",outputDir + "/XMLObject.cpp");
-                  }
-                  if (verbose) {
-                     cerr << "C " << outputDir + "/XMLObject.h" << endl;
-                     cerr << "C " << outputDir + "/XMLObject.cpp" << endl;
-                  }
-                  copied = true;
-                  files_changed = true;
-              }
-            }
-            if ( !copied ) {
-                 cerr << "Cannot copy 'XMLObject.h' and 'XMLObject.cpp' from 'lib' to '" << outputDir << "'. Please make sure to copy files manually!" << endl;
-            }
-        }
-        else if (verbose) {
-            cerr << ". " << outputDir + "/XMLObject.h" << endl;
-            cerr << ". " << outputDir + "/XMLObject.cpp" << endl;
-        }
-
         //dump the appenders and parsers of all non-build-in classes
         for (map<FullName, Class*>::iterator it = classes.begin(); it != classes.end(); it++) {
             if (!it->second->isBuiltIn()) {
@@ -811,6 +783,9 @@ int main_wrapper(int argc, char** argv) {
         name << outputDir << "/" << cppNamespace << "/CMakeLists.txt";
 
         diffAndReplace(name.str(), generateCMakeLists(), dry_run);
+
+        diffAndReplace( outputDir + "/XMLObject.h", XMLObject_H, dry_run);
+        diffAndReplace( outputDir + "/XMLObject.cpp", XMLObject_CPP, dry_run);
 
         XMLPlatformUtils::Terminate();
 

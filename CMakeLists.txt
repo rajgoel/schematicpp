@@ -17,12 +17,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION 3.1)
-project(schematic++)
+cmake_minimum_required(VERSION 3.12)
+project(schematic++ VERSION 0.1.0)
+
+add_definitions(-DVERSION="${CMAKE_PROJECT_VERSION}") 
 
 set(CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR})
+
+set(OUTPUT_BASE_CLASS "${PROJECT_SOURCE_DIR}/src/BaseClass.h")
+
+# Convert output class to file with respective string literals
+file(READ "${PROJECT_SOURCE_DIR}/lib/XMLObject.h" XMLObject_H)
+file(READ "${PROJECT_SOURCE_DIR}/lib/XMLObject.cpp" XMLObject_CPP)
+file(WRITE "${OUTPUT_BASE_CLASS}" "// schematic++ v${CMAKE_PROJECT_VERSION}\n\n")
+file(APPEND "${OUTPUT_BASE_CLASS}" "const char *XMLObject_H =\n")
+file(APPEND "${OUTPUT_BASE_CLASS}" "R\"\"\"(// schematic++ v${CMAKE_PROJECT_VERSION}\n")
+file(APPEND "${OUTPUT_BASE_CLASS}" "${XMLObject_H})\"\"\";\n")
+file(APPEND "${OUTPUT_BASE_CLASS}" "const char *XMLObject_CPP =\n")
+file(APPEND "${OUTPUT_BASE_CLASS}" "R\"\"\"(${XMLObject_CPP})\"\"\";\n")
 
 add_executable(schematic++
     src/main.cpp
@@ -39,3 +53,6 @@ if(WIN32)
 else(WIN32)
     target_link_libraries(schematic++ xerces-c)
 endif(WIN32)
+
+install(TARGETS schematic++)
+
