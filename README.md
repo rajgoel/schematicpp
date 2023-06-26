@@ -21,7 +21,6 @@ The program is built like a typical CMake project. A normal build will look some
  ~/schematicpp$ mkdir build
  ~/schematicpp$ cd build
  ~/schematicpp/build$ cmake ..
-
  ~/schematicpp/build$ make
  ```
 ## Install the program
