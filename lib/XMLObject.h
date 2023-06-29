@@ -5,7 +5,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <list>
+#include <optional>
 
 #include <xercesc/dom/DOM.hpp>
 
@@ -125,7 +125,7 @@ protected:
   inline static Factory factory;
 public:
   /// Returns a pointer of type T of the object.
-  template<typename T> T* is() {
+  template<typename T> inline T* is() {
     return dynamic_cast<T*>(this);
   }
 
@@ -135,7 +135,7 @@ public:
    * If the cast fails, throws a std::runtime_error with an error message
    * indicating an illegal cast operation.
    */
-  template<typename T> T* get() {
+  template<typename T> inline T* get() {
     T* ptr = dynamic_cast<T*>(this);
     if ( ptr == nullptr ) {
       throw std::runtime_error("XMLObject: Illegal cast");
