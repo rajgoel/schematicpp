@@ -141,7 +141,7 @@ public:
       throw std::runtime_error("XMLObject: Illegal cast");
     }
     return ptr;
-  };
+  }
 
 protected:
   template<typename T>

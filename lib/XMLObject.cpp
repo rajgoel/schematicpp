@@ -18,10 +18,10 @@ protected:
     std::istream &is;
   public:
     IStreamBinInputStream(std::istream &is) : xercesc::BinInputStream(), is(is) {};
-    XMLFilePos curPos(void) const { return is.tellg(); };
+    XMLFilePos curPos(void) const { return (XMLFilePos)is.tellg(); };
     XMLSize_t readBytes(XMLByte* const buf, const XMLSize_t max) {
-      is.read((char*)buf, max);
-      return is.gcount();
+      is.read((char*)buf, (std::streamsize)max);
+      return (XMLSize_t)is.gcount();
     };
     const XMLCh* getContentType() const {
       //TODO: return application/xml
@@ -52,7 +52,7 @@ XMLObject* XMLObject::createFromStream(std::istream& xmlStream) {
   parser.reset(); // delete unique_ptr to parser before calling Terminate
   xercesc::XMLPlatformUtils::Terminate();
   return object;
-};
+}
 
 XMLObject* XMLObject::createFromString(const std::string& xmlString) {
   // std::cout << "Create XML object from string" << std::endl;
