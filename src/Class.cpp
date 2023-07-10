@@ -288,7 +288,7 @@ void Class::writeHeader(ostream& os) const {
             if ( !it->defaultStr.empty() ) {
               if (!first) os << ",";
               os << endl;
-              os << "\t\t{ .xmlns = \"\", .prefix = \"\" , .name = \"" << it->name  << "\", .value = \"" << it->defaultStr << "\"}";
+              os << "\t\t{ .xmlns = \"" << name.first << "\", .prefix = \"\" , .name = \"" << it->name  << "\", .value = \"" << it->defaultStr << "\"}";
               first = false; 
             }
           }
