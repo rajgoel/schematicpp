@@ -129,6 +129,10 @@ public:
     return dynamic_cast<T*>(this);
   }
 
+  template<typename T> inline const T* is() const {
+    return dynamic_cast<const T*>(this);
+  }
+
   /**
    * Attempt to cast the current instance to the specified type T.
    * If the cast is successful, returns a pointer to the casted object.
@@ -137,6 +141,14 @@ public:
    */
   template<typename T> inline T* get() {
     T* ptr = dynamic_cast<T*>(this);
+    if ( ptr == nullptr ) {
+      throw std::runtime_error("XMLObject: Illegal cast");
+    }
+    return ptr;
+  }
+
+  template<typename T> inline const T* get() const {
+    const T* ptr = dynamic_cast<const T*>(this);
     if ( ptr == nullptr ) {
       throw std::runtime_error("XMLObject: Illegal cast");
     }
