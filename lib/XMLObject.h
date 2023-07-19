@@ -3,6 +3,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 #include <optional>
@@ -44,6 +45,7 @@ struct Attribute {
   Namespace prefix;
   AttributeName name;
   AttributeValue value;
+  operator std::string_view() const { return value; };
   operator std::string() const { return value; };
   operator bool() const { return (value == "true"); };
   operator int() const { return std::stoi(value); };
