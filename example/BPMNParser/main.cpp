@@ -3,7 +3,6 @@
 #include <sstream>
 
 #include <xercesc/parsers/XercesDOMParser.hpp>
-#include <libschematicpp/XercesString.h>
 #include <xercesc/dom/DOMElement.hpp>
 #include <xercesc/util/PlatformUtils.hpp>
 

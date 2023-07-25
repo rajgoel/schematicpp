@@ -192,19 +192,17 @@ static void parseSequence(DOMElement *parent, DOMElement *sequence, Class *cl, b
     }
 
     children.insert(children.end(), subSequences.begin(), subSequences.end());
-    
     for (size_t x = 0; x < children.size(); x++) {
         DOMElement *child = children[x];
             
-        int minOccurs = 1;
-        int maxOccurs = 1;
+        int minOccurs = 0;
+        int maxOccurs = UNBOUNDED;
 
         XercesString typeStr("type");
         XercesString refStr("ref");
         XercesString minOccursStr("minOccurs");
         XercesString maxOccursStr("maxOccurs");
         string name = XercesString(child->getAttribute(XercesString("name")));
-
         if (child->hasAttribute(minOccursStr)) {
             stringstream ss;
             ss << XercesString(child->getAttribute(minOccursStr));
@@ -283,6 +281,7 @@ static void parseSequence(DOMElement *parent, DOMElement *sequence, Class *cl, b
     vector<DOMElement*> choices = getChildElementsByTagName(sequence, "choice");
 
     for (size_t x = 0; x < choices.size(); x++) {
+
         DOMElement *choice = choices[x];
 
         parseSequence(parent, choice, cl, true);
