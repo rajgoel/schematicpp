@@ -55,6 +55,7 @@ struct Attribute {
   Attribute& operator=(const int& i) { value = std::to_string(i); return *this; };
   Attribute& operator=(const double& d) { value = std::to_string(d); return *this; };
 };
+
 typedef std::vector<Attribute> Attributes;
 typedef std::vector<std::unique_ptr<XMLObject>> Children;
 
@@ -157,7 +158,7 @@ public:
     return ptr;
   }
 
-protected:
+private:
   template<typename T>
   void findRecursive(std::vector<std::reference_wrapper<T> >& result, const Children& descendants)
   {
@@ -169,16 +170,40 @@ protected:
     }
   }
 
+  template<typename T>
+  void findRecursive(std::vector<std::reference_wrapper<const T> >& result, const Children& descendants) const
+  {
+    for (auto& descendant : descendants) {
+      if (descendant->is<const T>()) {
+        result.push_back(*descendant->get<const T>());
+      }
+      findRecursive(result, descendant->children );
+    }
+  }
+
 public:
   /**
    * Find all descendants of type T.
    *
-   * @return A vector of references to decendants of type T.
+   * @return A vector of references to descendants of type T.
    */
   template<typename T>
   std::vector<std::reference_wrapper<T> > find()
   {
     std::vector<std::reference_wrapper<T> > result;
+    findRecursive(result, children);
+    return result;
+  }
+
+  /**
+   * Find all descendants of type T.
+   *
+   * @return A vector of const references to descendants of type T.
+   */
+  template<typename T>
+  std::vector<std::reference_wrapper<const T> > find() const
+  {
+    std::vector<std::reference_wrapper<const T> > result;
     findRecursive(result, children);
     return result;
   }
