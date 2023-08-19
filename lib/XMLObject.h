@@ -19,41 +19,54 @@ typedef std::string ElementName;
 typedef std::string TextContent;
 typedef std::string Namespace;
 typedef std::string AttributeName;
-typedef std::string AttributeValue;
+
+/**
+ * The `Value` struct stores a value and provides implicit conversion and assignment operators
+ * to facilitate easy conversion between different types and convenient assignment
+ * of values.
+ *
+ * Example usage:
+ * Value value;
+ * value = "a_string";              // Assignment using a std::string.
+ * value = true;                    // Assignment using a bool.
+ * value = 42;                      // Assignment using an int.
+ * value = 3.14;                    // Assignment using a double.
+ *
+ * std::string stringValue = value; // Implicit conversion to std::string.
+ * bool booleanValue = value;       // Implicit conversion to bool.
+ * int integerValue = value;        // Implicit conversion to int.
+ * double realValue = value;        // Implicit conversion to double.
+ *
+ */
+
+struct Value {
+  std::string value;
+  operator std::string_view() const { return value; };
+  operator std::string() const { return value; };
+  operator bool() const { return (value == True); };
+  operator int() const { return std::stoi(value); };
+  operator double() const  { return std::stod(value); };
+  Value& operator=(const std::string& s) { value = s; return *this; };
+  Value& operator=(bool b) { value = (b ? True : False); return *this; };
+  Value& operator=(int i) { value = std::to_string(i); return *this; };
+  Value& operator=(double d) { value = std::to_string(d); return *this; };
+  Value(const std::string& s) : value(s) {};
+  Value(bool b) : value(b ? True : False) {};
+  Value(int i) : value(std::to_string(i)) {};
+  Value(double d) : value(std::to_string(d)) {};
+  inline static std::string True = "true";
+  inline static std::string False = "false";
+};
 
 /**
  * The `Attribute` struct stores information about the namespace, prefix, name, and
- * value of the attribute. It provides implicit conversion and assignment operators
- * to facilitate easy conversion between different types and convenient assignment
- * of attribute values.
- *
- * Example usage:
- * Attribute attribute;
- * attribute = "a_string";              // Assignment using a std::string.
- * attribute = true;                    // Assignment using a bool.
- * attribute = 42;                      // Assignment using an int.
- * attribute = 3.14;                    // Assignment using a double.
- *
- * std::string stringValue = attribute; // Implicit conversion to std::string.
- * bool booleanValue = attribute;       // Implicit conversion to bool.
- * int integerValue = attribute;        // Implicit conversion to int.
- * double realValue = attribute;        // Implicit conversion to double.
- *
+ * value of the attribute. 
  */
 struct Attribute {
   Namespace xmlns;
   Namespace prefix;
   AttributeName name;
-  AttributeValue value;
-  operator std::string_view() const { return value; };
-  operator std::string() const { return value; };
-  operator bool() const { return (value == "true"); };
-  operator int() const { return std::stoi(value); };
-  operator double() const  { return std::stod(value); };
-  Attribute& operator=(const std::string& s) { value = s; return *this; };
-  Attribute& operator=(const bool& b) { value = (b ? "true" : "false"); return *this; };
-  Attribute& operator=(const int& i) { value = std::to_string(i); return *this; };
-  Attribute& operator=(const double& d) { value = std::to_string(d); return *this; };
+  Value value;
 };
 
 typedef std::vector<Attribute> Attributes;

@@ -105,7 +105,7 @@ XMLObject::XMLObject(const Namespace& xmlns, const ClassName& className, const x
     // get namespace from atrribute or parent element
     Namespace attributeXmlns = item->getNamespaceURI() ? xercesc::XMLString::transcode(item->getNamespaceURI()) : xmlns;
     Namespace attributePrefix = item->getPrefix() ? xercesc::XMLString::transcode(item->getPrefix()) : "";
-    AttributeValue attributeValue = xercesc::XMLString::transcode(item->getNodeValue());
+    Value attributeValue((std::string)xercesc::XMLString::transcode(item->getNodeValue()));
     attributes.push_back( { attributeXmlns, attributePrefix, attributeName, attributeValue } );
   }
 
@@ -178,7 +178,7 @@ std::optional< std::reference_wrapper<Attribute> > XMLObject::getOptionalAttribu
 std::string XMLObject::stringify() const {
   std::string xmlString = std::string("<") + (!prefix.empty() ? prefix + ":" : "") + elementName;
   for ( auto& attribute : attributes ) {
-    xmlString += std::string(" ") + (!attribute.prefix.empty() ? attribute.prefix + ":" : "") + attribute.name + "=\"" + attribute.value +"\"";
+    xmlString += std::string(" ") + (!attribute.prefix.empty() ? attribute.prefix + ":" : "") + attribute.name + "=\"" + attribute.value.value +"\"";
   }
   xmlString += ">";
 
