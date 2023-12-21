@@ -42,10 +42,18 @@ XMLObject* XMLObject::createFromStream(std::istream& xmlStream) {
   parser->parse(IStreamInputSource(xmlStream));
 
   xercesc::DOMDocument* document = parser->getDocument();
-  if(!document) throw std::runtime_error("Failed to parse XML");
+  if (!document) {
+    parser.reset(); // delete unique_ptr to parser before calling Terminate
+    xercesc::XMLPlatformUtils::Terminate();
+    throw std::runtime_error("Failed to parse XML");
+  }
 
   xercesc::DOMElement* rootElement = document->getDocumentElement();
-  if(!rootElement) throw std::runtime_error("Failed to get root element of XML");
+  if (!rootElement) {
+    parser.reset(); // delete unique_ptr to parser before calling Terminate
+    xercesc::XMLPlatformUtils::Terminate();
+    throw std::runtime_error("Failed to get root element of XML");
+  }
 
   std::string rootName =  xercesc::XMLString::transcode(rootElement->getLocalName());
   XMLObject* object = createObject(rootElement);
@@ -68,10 +76,18 @@ XMLObject* XMLObject::createFromFile(const std::string& filename) {
   parser->parse(xercesc::XMLString::transcode(filename.c_str()));
 
   xercesc::DOMDocument* document = parser->getDocument();
-  if(!document) throw std::runtime_error("Failed to parse XML");
+  if (!document) {
+    parser.reset(); // delete unique_ptr to parser before calling Terminate
+    xercesc::XMLPlatformUtils::Terminate();
+    throw std::runtime_error("Failed to parse XML");
+  }
 
   xercesc::DOMElement* rootElement = document->getDocumentElement();
-  if(!rootElement) throw std::runtime_error("Failed to get root element of XML");
+  if (!rootElement) {
+    parser.reset(); // delete unique_ptr to parser before calling Terminate
+    xercesc::XMLPlatformUtils::Terminate();
+    throw std::runtime_error("Failed to get root element of XML");
+  }
 
   std::string rootName =  xercesc::XMLString::transcode(rootElement->getLocalName());
   XMLObject* object = createObject(rootElement);

@@ -38,7 +38,6 @@ typedef std::string AttributeName;
  * double realValue = value;        // Implicit conversion to double.
  *
  */
-
 struct Value {
   std::string value;
   operator std::string_view() const { return value; };
