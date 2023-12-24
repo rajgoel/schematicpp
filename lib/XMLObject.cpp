@@ -3,6 +3,7 @@
 #include <xercesc/util/BinInputStream.hpp>
 #include <xercesc/sax/InputSource.hpp>
 #include <iostream>
+#include <algorithm>
 
 namespace XML {
 
