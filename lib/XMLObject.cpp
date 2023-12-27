@@ -209,12 +209,12 @@ std::string XMLObject::stringify() const {
 
 std::ostream& operator<< (std::ostream& os, const XMLObject* obj) {
   os << obj->stringify();
-	return os;
+  return os;
 }
 
 std::ostream& operator<< (std::ostream& os, const XMLObject& obj) {
   os << obj.stringify();
-	return os;
+  return os;
 }
 
 } // end namespace XML
