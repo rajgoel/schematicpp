@@ -21,6 +21,8 @@ typedef std::string Namespace;
 typedef std::string AttributeName;
 
 /**
+ * @brief A struct representing the value of an XML-node attribute.
+ *
  * The `Value` struct stores a value and provides implicit conversion and assignment operators
  * to facilitate easy conversion between different types and convenient assignment
  * of values.
@@ -59,6 +61,8 @@ struct Value {
 };
 
 /**
+ * @brief A struct representing an attribute of an XML-node.
+ *
  * The `Attribute` struct stores information about the namespace, prefix, name, and
  * value of the attribute. 
  */
@@ -80,9 +84,9 @@ typedef std::unordered_map<ElementName, XMLObject* (*)(const Namespace& xmlns, c
 
 
 /**
- * XMLObject
+ * @brief A class representing a node in an XML-tree.
  *
- * A class allowing to read and store an XML-tree. The root element can be created using
+ * The `XMLObject` class allows to read and store an XML-tree. The root element can be created using
  * - `XMLObject::createFromStream(xmlStream)`
  * - `XMLObject::createFromString(xmlString)`
  * - `XMLObject::createFromFile(filename)`
