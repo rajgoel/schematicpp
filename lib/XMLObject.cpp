@@ -80,7 +80,7 @@ XMLObject* XMLObject::createFromFile(const std::string& filename) {
   if (!document) {
     parser.reset(); // delete unique_ptr to parser before calling Terminate
     xercesc::XMLPlatformUtils::Terminate();
-    throw std::runtime_error("Failed to parse XML");
+    throw std::runtime_error("Failed to load and parse XML-file");
   }
 
   xercesc::DOMElement* rootElement = document->getDocumentElement();
