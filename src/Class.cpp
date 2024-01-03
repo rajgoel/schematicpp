@@ -212,7 +212,7 @@ void Class::writeHeader(ostream& os) const {
           if ( schema != schemaNames.front() ) os << ", ";
           os << schema;
         }
-        os << " ." << endl;
+        os << "." << endl;
         os << " */" << endl;
         os << "namespace XML::" << cppNamespace << " {" << endl;
 
