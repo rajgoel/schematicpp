@@ -10,6 +10,9 @@
 
 #include <xercesc/dom/DOM.hpp>
 
+/**
+ * @brief The `XML` namespace contains classes representing XML-nodes defined in given XML-schema(s). 
+ */
 namespace XML {
 
 class XMLObject;

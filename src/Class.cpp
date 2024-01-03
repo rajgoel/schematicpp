@@ -19,6 +19,7 @@
  */
 
 #include "Class.h"
+#include <vector>
 #include <sstream>
 #include <stdexcept>
 #include <iostream>
@@ -27,6 +28,7 @@ using namespace std;
 
 extern bool verbose;
 extern string schemaName;
+extern vector<string> schemaNames;
 extern string cppNamespace;
 
 Class::Class(FullName name, ClassType type) : name(name), cppName(sanitize(name.second)), type(type), 
@@ -204,6 +206,14 @@ void Class::writeHeader(ostream& os) const {
         }
 
         os << endl;
+        os << "/**" << endl;
+        os << " * @brief The  `XML::" << cppNamespace << "` namespace contains classes from the following XML-schema(s): ";
+        for (auto schema : schemaNames ) {
+          if ( schema != schemaNames.front() ) os << ", ";
+          os << schema;
+        }
+        os << " ." << endl;
+        os << " */" << endl;
         os << "namespace XML::" << cppNamespace << " {" << endl;
 
         os << endl;
@@ -218,9 +228,10 @@ void Class::writeHeader(ostream& os) const {
         if ( memberClass ) os << endl;
 
         os << "/**" << endl;
-        os << " * Element name:  " << cppName << endl;
-        os << " * XML Schema:    " << schema << endl;
-        os << " * XML Namespace: " << name.first << endl;
+        os << " * Overview:" << endl;
+        os << " * - Element name:  " << cppName << endl;
+        os << " * - XML-Schema:    " << schema << endl;
+        os << " * - XML-Namespace: " << name.first << endl;
         os << " *" << endl;
         os << " * Members:" << endl;
         // obtain all defaults including those from base classes

@@ -79,6 +79,7 @@ map<FullName, Class*> groups;
 
 bool verbose = false;
 std::string schemaName;
+vector<string> schemaNames;
 std::string cppNamespace;
 
 static Class* addClass(Class *cl, map<FullName, Class*>& to = classes) {
@@ -483,7 +484,7 @@ cerr << it->second->name.first << " " << it->second->name.second << " - " << it2
     }
 }
 
-static void work(string outputDir, const vector<string>& schemaNames) {
+static void work(string outputDir) {
     XercesDOMParser parser;
     parser.setDoNamespaces(true);
 
@@ -677,7 +678,6 @@ int main_wrapper(int argc, char** argv) {
     try {
         bool dry_run = false;
         string outputDir;
-        vector<string> schemaNames;
 
         std::string program(argv[0]);
         argv++;
@@ -741,7 +741,7 @@ int main_wrapper(int argc, char** argv) {
         addClass(new IdRefClass);
 
 
-        work(outputDir, schemaNames);
+        work(outputDir);
 
         doPostResolveInits();
 
