@@ -210,7 +210,7 @@ void Class::writeHeader(ostream& os) const {
         os << " * @brief The `XML::" << cppNamespace << "` namespace contains classes from the following XML-schema(s): ";
         for (auto schema : schemaNames ) {
           if ( schema != schemaNames.front() ) os << ", ";
-          os << schema;
+          os << "@ref " << schema;
         }
         os << "." << endl;
         os << " */" << endl;
