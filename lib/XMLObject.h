@@ -137,7 +137,7 @@ public:
    *
    * @param filename The path to the XML file.
    * @return A pointer to the created XMLObject.
-   * @throws std::runtime_error if parsing the XML fails.
+   * @throws std::runtime_error if loading the file or parsing the XML fails.
    */
 	static XMLObject* createFromFile(const std::string& filename);
 
