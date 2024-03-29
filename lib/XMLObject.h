@@ -49,8 +49,8 @@ struct Value {
   operator std::string_view() const { return value; };
   operator std::string() const { return value; };
   operator bool() const { return (value == True); };
-  operator int() const { return std::stoi(value); };
-  operator double() const  { return std::stod(value); };
+  operator int() const { try { return std::stoi(value); } catch(...) { throw std::runtime_error("Cannot convert '" + value + "' to int"); } };
+  operator double() const { try { return std::stod(value); } catch(...) { throw std::runtime_error("Cannot convert '" + value + "' to double"); } };
   Value& operator=(const std::string& s) { value = s; return *this; };
   Value& operator=(bool b) { value = (b ? True : False); return *this; };
   Value& operator=(int i) { value = std::to_string(i); return *this; };

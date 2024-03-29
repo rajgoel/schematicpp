@@ -16,7 +16,7 @@
 # limitations under the License.
 
 cmake_minimum_required(VERSION 3.12)
-project(schematic++ VERSION 0.1.1)
+project(schematic++ VERSION 0.2.0)
 
 add_definitions(-DVERSION="${CMAKE_PROJECT_VERSION}") 
 
