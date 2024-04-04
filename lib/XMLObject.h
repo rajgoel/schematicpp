@@ -256,6 +256,13 @@ public:
   std::string stringify() const;
 
   /**
+   * @brief Creates formated string representing the XMLObject including its children.
+   *
+   * @return A formated string representing the XMLObject.
+   */
+  std::string format(std::string indentation = "\t", unsigned int depth = 0) const;
+
+  /**
    * @brief Get a required child of type T.
    *
    * @return A reference to the required child.
