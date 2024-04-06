@@ -207,6 +207,33 @@ std::string XMLObject::stringify() const {
   return xmlString;
 }
 
+std::string XMLObject::format(std::string indentation, unsigned int depth) const {
+  // lambda to repeat indentation n times
+  auto indent = [&indentation](unsigned int n) -> std::string {
+    std::string result;
+    for (unsigned int i = 0; i < n; ++i) {
+      result += indentation;
+    }
+    return result;
+  };
+  
+  std::string xmlString = indent(depth) + std::string("<") + (!prefix.empty() ? prefix + ":" : "") + elementName;
+  for ( auto& attribute : attributes ) {
+    xmlString += std::string(" ") + (!attribute.prefix.empty() ? attribute.prefix + ":" : "") + attribute.name + "=\"" + attribute.value.value +"\"";
+  }
+  xmlString += ">\n";
+
+  for ( auto& child : children ) {
+    xmlString += child->format(indentation, depth+1);
+  }
+  xmlString += textContent;
+  if ( !textContent.empty() && !textContent.ends_with("\n") ) {
+    xmlString += "\n";
+  } 
+  xmlString += indent(depth) + std::string("</") + (!prefix.empty() ? prefix + ":" : "") + elementName + ">\n";
+  return xmlString;
+}
+
 std::ostream& operator<< (std::ostream& os, const XMLObject* obj) {
   os << obj->stringify();
   return os;
