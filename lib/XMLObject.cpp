@@ -33,7 +33,15 @@ public:
   IStreamInputSource(std::istream &is) : InputSource(), is(is) {};
 };
 
-
+std::string transcode(const XMLCh* xmlChStr) {
+  char* cStr = xercesc::XMLString::transcode(xmlChStr);
+  if (!cStr) {
+      throw std::runtime_error("Failed to transcode XML string");
+  }
+  std::string result(cStr);
+  xercesc::XMLString::release(&cStr);
+  return result;
+}
 
 XMLObject* XMLObject::createFromStream(std::istream& xmlStream) {
   // std::cout << "Create XML object from input stream" << std::endl;
@@ -56,7 +64,7 @@ XMLObject* XMLObject::createFromStream(std::istream& xmlStream) {
     throw std::runtime_error("Failed to get root element of XML");
   }
 
-  std::string rootName =  xercesc::XMLString::transcode(rootElement->getLocalName());
+  std::string rootName = transcode(rootElement->getLocalName());
   XMLObject* object = createObject(rootElement);
   parser.reset(); // delete unique_ptr to parser before calling Terminate
   xercesc::XMLPlatformUtils::Terminate();
@@ -74,7 +82,10 @@ XMLObject* XMLObject::createFromFile(const std::string& filename) {
   xercesc::XMLPlatformUtils::Initialize();
   std::unique_ptr<xercesc::XercesDOMParser> parser = std::make_unique<xercesc::XercesDOMParser>();
   parser->setDoNamespaces(true);
-  parser->parse(xercesc::XMLString::transcode(filename.c_str()));
+  XMLCh* xmlFilename = xercesc::XMLString::transcode(filename.c_str());
+  parser->parse(xmlFilename);
+  xercesc::XMLString::release(&xmlFilename);  // Release memory after usage
+
 
   xercesc::DOMDocument* document = parser->getDocument();
   if (!document) {
@@ -90,7 +101,8 @@ XMLObject* XMLObject::createFromFile(const std::string& filename) {
     throw std::runtime_error("Failed to get root element of XML");
   }
 
-  std::string rootName =  xercesc::XMLString::transcode(rootElement->getLocalName());
+  std::string rootName = transcode(rootElement->getLocalName());
+  
   XMLObject* object = createObject(rootElement);
   parser.reset(); // delete unique_ptr to parser before calling Terminate
   xercesc::XMLPlatformUtils::Terminate();
@@ -99,8 +111,8 @@ XMLObject* XMLObject::createFromFile(const std::string& filename) {
 
 
 XMLObject* XMLObject::createObject(const xercesc::DOMElement* element) {
-  Namespace xmlns = xercesc::XMLString::transcode(element->getNamespaceURI());
-  ElementName elementName = xercesc::XMLString::transcode(element->getLocalName());
+  Namespace xmlns = transcode(element->getNamespaceURI());
+  ElementName elementName = transcode(element->getLocalName());
   if ( auto it = factory.find(xmlns + ":" + elementName); it != factory.end() ) { 
     return it->second(xmlns, elementName, element); 
   }
@@ -110,19 +122,19 @@ XMLObject* XMLObject::createObject(const xercesc::DOMElement* element) {
 
 XMLObject::XMLObject(const Namespace& xmlns, const ClassName& className, const xercesc::DOMElement* element, const Attributes& defaultAttributes) : xmlns(xmlns), className(className) {
 
-  prefix = xercesc::XMLString::transcode(element->getPrefix());
-  elementName = xercesc::XMLString::transcode(element->getLocalName());
+  prefix = transcode(element->getPrefix());
+  elementName = transcode(element->getLocalName());
 
   // set attributes
   xercesc::DOMNamedNodeMap* elementAttributes = element->getAttributes();
   for (XMLSize_t i = 0; i < elementAttributes->getLength(); i++) {
     xercesc::DOMNode* item = elementAttributes->item(i);
     
-    AttributeName attributeName = xercesc::XMLString::transcode(item->getLocalName());
+    AttributeName attributeName = transcode(item->getLocalName());
     // get namespace from atrribute or parent element
-    Namespace attributeXmlns = item->getNamespaceURI() ? xercesc::XMLString::transcode(item->getNamespaceURI()) : xmlns;
-    Namespace attributePrefix = item->getPrefix() ? xercesc::XMLString::transcode(item->getPrefix()) : "";
-    Value attributeValue((std::string)xercesc::XMLString::transcode(item->getNodeValue()));
+    Namespace attributeXmlns = item->getNamespaceURI() ? transcode(item->getNamespaceURI()) : xmlns;
+    Namespace attributePrefix = item->getPrefix() ? transcode(item->getPrefix()) : "";
+    Value attributeValue(transcode(item->getNodeValue()));
     attributes.push_back( { attributeXmlns, attributePrefix, attributeName, attributeValue } );
   }
 
@@ -139,7 +151,7 @@ XMLObject::XMLObject(const Namespace& xmlns, const ClassName& className, const x
   }
 
   if ( children.empty() ) {
-    textContent = xercesc::XMLString::transcode(element->getTextContent());
+    textContent = transcode(element->getTextContent());
   }
 }
 
