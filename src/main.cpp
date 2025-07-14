@@ -501,8 +501,7 @@ static void work(string outputDir) {
         DOMElement *root = document->getDocumentElement();
 
         DOMAttr *targetNamespace = root->getAttributeNode(XercesString("targetNamespace"));
-        CHECK(targetNamespace);
-        string tns = XercesString(targetNamespace->getValue());
+        string tns = targetNamespace ? (string)XercesString(targetNamespace->getValue()) : string();
 
         //HACKHACK: we should handle NS lookup properly
         nsLUT["tns"] = tns;
