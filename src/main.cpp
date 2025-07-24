@@ -92,7 +92,7 @@ static Class* addClass(Class *cl, map<FullName, Class*>& to = classes) {
         else {
             FullName name = cl->name;
             delete cl;
-            throw runtime_error(name.first + ":" + name.second + " defined more than once");
+            throw runtime_error(string("'") + name.first + ":" + name.second + "' defined more than once");
         }
     }
 
@@ -308,13 +308,15 @@ static void parseComplexType(DOMElement *element, FullName fullName, Class *cl) 
 
         if (name == "sequence") {
             parseSequence(element, child, cl);
-        } else if (name == "choice" || name == "all") {
+        }
+        else if (name == "choice" || name == "all") {
             if (child->hasAttribute(XercesString("minOccurs")) || child->hasAttribute(XercesString("maxOccurs"))) {
                 throw runtime_error("minOccurs/maxOccurs not currently supported in <choice>/<all> types");
             }
 
             parseSequence(element, child, cl, true);
-        } else if (name == "complexContent" || name == "simpleContent") {
+        } 
+        else if (name == "complexContent" || name == "simpleContent") {
             DOMElement *extension = getExpectedChildElement(child, "extension");
             if (extension == NULL) continue;
             if (!extension->hasAttribute(XercesString("base"))) {
@@ -326,7 +328,8 @@ static void parseComplexType(DOMElement *element, FullName fullName, Class *cl) 
             cl->baseType = base;
 
             parseComplexType(extension, fullName, cl);
-        } else if (name == "attribute") {
+        } 
+        else if (name == "attribute") {
 
             if (!child->hasAttribute(XercesString("type"))) {
                 throw runtime_error("<attribute> missing expected attribute 'type'");
@@ -360,17 +363,20 @@ static void parseComplexType(DOMElement *element, FullName fullName, Class *cl) 
             info.maxOccurs = 1;
 
             cl->addMember(info);
-        } else if (name == "attributeGroup") {
+        } 
+        else if (name == "attributeGroup") {
             if (!child->hasAttribute(XercesString("ref"))) {
                 throw runtime_error("<attributeGroup> missing expected attribute 'ref'");
             }
 
             //add group ref
             cl->groups.push_back(toFullName(XercesString(child->getAttribute(XercesString("ref")))));
-        } else if (name == "anyAttribute") {
+        } 
+        else if (name == "anyAttribute" || name == "annotation") {
             // ignore
-        } else {
-            throw runtime_error("Unknown complexType child of type " + (string)name);
+        }
+        else {
+            throw runtime_error("Unsupported complexType child of type '" + (string)name + "'");
         }
     }
 }
@@ -428,14 +434,17 @@ static void parseElement(DOMElement *element, string tns) {
             DOMElement *expectedChild = getExpectedChildElement(element, "complexType");
             if (expectedChild == NULL) return;
             parseComplexType(expectedChild, type);
-        } else {
+        } 
+        else {
             type = toFullName(XercesString(element->getAttribute(XercesString("type"))), tns);
         }
 
         addClass(new Class(fullName, Class::COMPLEX_TYPE, type))->isDocument = true;
-    } else if (nodeName == "simpleType") {
+    } 
+    else if (nodeName == "simpleType") {
         parseSimpleType(element, fullName);
-    } else if (nodeName == "attributeGroup") {
+    } 
+    else if (nodeName == "attributeGroup") {
         //handle an attributeGroup almost the same way as a complexType
         //we add the dummy Class group to ::groups rather than ::classes
         //this means it won't result in generated code
@@ -477,7 +486,8 @@ cerr << it->second->name.first << " " << it->second->name.second << " - " << it2
                 }
 
                 it2->cl = NULL;
-            } else {
+            }
+            else {
                 it2->cl = classIt->second;
             }
         }
@@ -546,7 +556,8 @@ static void work(string outputDir) {
             }
 
             it->second->base = classIt->second;
-        } else if (it->second->isDocument) {
+        }
+        else if (it->second->isDocument) {
             throw runtime_error("Document without base type!");
         }
 
@@ -606,7 +617,8 @@ static void diffAndReplace(string fileName, string newContents, bool dry_run) {
     if (newContents == originalContents) {
         //no difference
         if (verbose) cerr << ". " << fileName << endl;
-    } else {
+    }
+    else {
         //contents differ - either original does not exist or the schema changed for this type
 #ifdef WIN32
         if (_unlink(fileName.c_str())) {
@@ -615,7 +627,8 @@ static void diffAndReplace(string fileName, string newContents, bool dry_run) {
 #endif
             //new file added
             cerr << "A " << fileName << endl;
-        } else {
+        } 
+        else {
             //old file modified (replaced)
             cerr << "M " << fileName << endl;
         }
@@ -686,26 +699,30 @@ int main_wrapper(int argc, char** argv) {
             if (!strcmp(argv[0], "-v")) {
                 verbose = true;
                 cerr << "Verbose mode" << endl;
-            } else if (!strcmp(argv[0], "-s")) {
+            } 
+            else if (!strcmp(argv[0], "-s")) {
                 dry_run = true;
                 if (verbose) cerr << "Simulate generation" << endl;
-            } else if (!strcmp(argv[0], "-n") && argc > 1 && argv[1][0] != '-') {
+            } 
+            else if (!strcmp(argv[0], "-n") && argc > 1 && argv[1][0] != '-') {
                 argv++;
                 argc--;
                 cppNamespace = argv[0];
                 if (verbose) cerr << "Namespace: " << argv[0] << endl;
-            } else if (!strcmp(argv[0], "-o") && argc > 1 && argv[1][0] != '-') {
+            } 
+            else if (!strcmp(argv[0], "-o") && argc > 1 && argv[1][0] != '-') {
                 argv++;
                 argc--;
                 outputDir = argv[0];
                 if (verbose) cerr << "Output directory: " << argv[0] << endl;
-            } else if (!strcmp(argv[0], "-i")) {
-                  while ( argc > 1 && argv[1][0] != '-' ) {
-                      argv++;
-                      argc--;
-                      schemaNames.push_back(argv[0]);
-                      if (verbose) cerr << "XML schema definition: " << argv[0] << endl;
-                  }
+            } 
+            else if (!strcmp(argv[0], "-i")) {
+                while ( argc > 1 && argv[1][0] != '-' ) {
+                    argv++;
+                    argc--;
+                    schemaNames.push_back(argv[0]);
+                    if (verbose) cerr << "XML schema definition: " << argv[0] << endl;
+                }
             }
 
             argv++;
@@ -791,16 +808,19 @@ int main_wrapper(int argc, char** argv) {
             if (files_changed) {
                 if (verbose) cerr << "Changes detected" << endl;
                 return 1;
-            } else {
+            } 
+            else {
                 if (verbose) cerr << "No changes detected" << endl;
             }
         }
 
         return 0;
-    } catch(const std::exception& e) {
+    }
+    catch(const std::exception& e) {
         cerr << "Caught exception: " << e.what() << endl;
         return 1;
-    } catch(...) {
+    } 
+    catch(...) {
         cerr << "Caught unknown exception" << endl;
         return 1;
     }
