@@ -23,6 +23,7 @@ The program is built like a typical CMake project. A normal build will look some
  ~/schematicpp/build$ cmake ..
  ~/schematicpp/build$ make
  ```
+
 ## Install the program
 After building the program, it can be installed by
 
@@ -88,7 +89,6 @@ After this step, the files `XMLObject.h` and `XMLObject.cpp` should have been co
 The generated classes should have been created in the `BPMNParser/bpmn`.
 
 ### Build library only
-
 
 You can build a library by
 ```sh

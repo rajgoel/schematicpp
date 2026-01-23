@@ -4,6 +4,7 @@
 #include <xercesc/sax/InputSource.hpp>
 #include <iostream>
 #include <algorithm>
+#include <filesystem>
 
 namespace XML {
 
@@ -36,7 +37,7 @@ public:
 std::string transcode(const XMLCh* xmlChStr) {
   char* cStr = xercesc::XMLString::transcode(xmlChStr);
   if (!cStr) {
-      throw std::runtime_error("Failed to transcode XML string");
+    throw std::runtime_error("Failed to transcode XML string");
   }
   std::string result(cStr);
   xercesc::XMLString::release(&cStr);
@@ -54,14 +55,14 @@ XMLObject* XMLObject::createFromStream(std::istream& xmlStream) {
   if (!document) {
     parser.reset(); // delete unique_ptr to parser before calling Terminate
     xercesc::XMLPlatformUtils::Terminate();
-    throw std::runtime_error("Failed to parse XML");
+    throw std::runtime_error("Failed to parse XML stream");
   }
 
   xercesc::DOMElement* rootElement = document->getDocumentElement();
   if (!rootElement) {
     parser.reset(); // delete unique_ptr to parser before calling Terminate
     xercesc::XMLPlatformUtils::Terminate();
-    throw std::runtime_error("Failed to get root element of XML");
+    throw std::runtime_error("Failed to get root element of XML stream");
   }
 
   std::string rootName = transcode(rootElement->getLocalName());
@@ -79,6 +80,11 @@ XMLObject* XMLObject::createFromString(const std::string& xmlString) {
 
 XMLObject* XMLObject::createFromFile(const std::string& filename) {
   // std::cout << "Create XML object from file" << std::endl;
+  const std::filesystem::path filePath(filename);
+  if (!std::filesystem::exists(filePath)) {
+    throw std::runtime_error("XML file '" + std::filesystem::absolute(filePath).string() + "' not found");
+  }
+
   xercesc::XMLPlatformUtils::Initialize();
   std::unique_ptr<xercesc::XercesDOMParser> parser = std::make_unique<xercesc::XercesDOMParser>();
   parser->setDoNamespaces(true);
@@ -91,14 +97,14 @@ XMLObject* XMLObject::createFromFile(const std::string& filename) {
   if (!document) {
     parser.reset(); // delete unique_ptr to parser before calling Terminate
     xercesc::XMLPlatformUtils::Terminate();
-    throw std::runtime_error("Failed to load and parse XML-file");
+    throw std::runtime_error("Failed to load and parse XML file: " + filename);
   }
 
   xercesc::DOMElement* rootElement = document->getDocumentElement();
   if (!rootElement) {
     parser.reset(); // delete unique_ptr to parser before calling Terminate
     xercesc::XMLPlatformUtils::Terminate();
-    throw std::runtime_error("Failed to get root element of XML");
+    throw std::runtime_error("Failed to get root element of XML file: " + filename);
   }
 
   std::string rootName = transcode(rootElement->getLocalName());
@@ -156,13 +162,13 @@ XMLObject::XMLObject(const Namespace& xmlns, const ClassName& className, const x
 }
 
 
-XMLObject& XMLObject::getRequiredChildByName(const ElementName& elementName) {
+XMLObject& XMLObject::getRequiredChildByName(const ElementName& name) {
   for ( auto& child : children ) {
-    if ( child->elementName == elementName ) {
+    if ( child->elementName == name ) {
       return *child;
     }
   }
-  throw std::runtime_error("Failed to get required child of element '" + elementName + "'");
+  throw std::runtime_error("Failed to get required child '" + name + "' of element '" + elementName + "'");
 }
 
 std::optional< std::reference_wrapper<XMLObject> > XMLObject::getOptionalChildByName(const ElementName& elementName) {
@@ -174,29 +180,29 @@ std::optional< std::reference_wrapper<XMLObject> > XMLObject::getOptionalChildBy
   return std::nullopt;
 }
 
-std::vector< std::reference_wrapper<XMLObject> > XMLObject::getChildrenByName(const ElementName& elementName) {
+std::vector< std::reference_wrapper<XMLObject> > XMLObject::getChildrenByName(const ElementName& name) {
   std::vector< std::reference_wrapper<XMLObject> > result;
   for ( auto& child : children ) {
-    if ( child->elementName == elementName ) {
+    if ( child->elementName == name ) {
       result.push_back(*child);
     }
   }
   return result;
 }
 
-Attribute& XMLObject::getRequiredAttributeByName(const AttributeName& attributeName) {
+Attribute& XMLObject::getRequiredAttributeByName(const AttributeName& name) {
   auto it = std::find_if(attributes.begin(), attributes.end(),
-                         [attributeName](Attribute& attribute) { return attribute.name == attributeName; }
+    [name](Attribute& attribute) { return attribute.name == name; }
   );
   if (it != attributes.end()) {
     return *it;
   }
-  throw std::runtime_error("Failed to get required attribute '" +  attributeName + "' of element '" + elementName + "'");
+  throw std::runtime_error("Failed to get required attribute '" +  name + "' of element '" + elementName + "'");
 }
 
-std::optional< std::reference_wrapper<Attribute> > XMLObject::getOptionalAttributeByName(const AttributeName& attributeName) {
+std::optional< std::reference_wrapper<Attribute> > XMLObject::getOptionalAttributeByName(const AttributeName& name) {
   auto it = std::find_if(attributes.begin(), attributes.end(),
-                         [attributeName](Attribute& attribute) { return attribute.name == attributeName; }
+                         [name](Attribute& attribute) { return attribute.name == name; }
   );
   if (it != attributes.end()) {
     return *it;

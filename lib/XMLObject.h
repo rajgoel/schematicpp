@@ -33,7 +33,7 @@ typedef std::string AttributeName;
  * Example usage:
  * ```
  * Value value;
- * value = std::to_string("a_string");  // Assignment using a std::string.
+ * value = "a_string";                  // Assignment using a std::string.
  * value = true;                        // Assignment using a bool.
  * value = 42;                          // Assignment using an int.
  * value = 3.14;                        // Assignment using a double.
@@ -170,7 +170,7 @@ public:
   template<typename T> inline T* get() {
     T* ptr = dynamic_cast<T*>(this);
     if ( ptr == nullptr ) {
-      throw std::runtime_error("XMLObject: Illegal cast");
+      throw std::runtime_error("Failed to cast element '" + elementName + "' from class '" + className + "' to type '" + typeid(T).name() + "'");
     }
     return ptr;
   }
@@ -183,7 +183,7 @@ public:
   template<typename T> inline const T* get() const {
     const T* ptr = dynamic_cast<const T*>(this);
     if ( ptr == nullptr ) {
-      throw std::runtime_error("XMLObject: Illegal cast");
+      throw std::runtime_error("Failed to cast element '" + elementName + "' from class '" + className + "' to type '" + typeid(T).name() + "'");
     }
     return ptr;
   }
@@ -256,9 +256,9 @@ public:
   std::string stringify() const;
 
   /**
-   * @brief Creates formated string representing the XMLObject including its children.
+   * @brief Creates formatted string representing the XMLObject including its children.
    *
-   * @return A formated string representing the XMLObject.
+   * @return A formatted string representing the XMLObject.
    */
   std::string format(std::string indentation = "\t", unsigned int depth = 0) const;
 
@@ -274,7 +274,7 @@ public:
         return *child->get<T>();
       }
     }
-    throw std::runtime_error("Failed to get required child of element '" + elementName + "'");
+    throw std::runtime_error("Failed to find required child of type '" + std::string(typeid(T).name()) + "' in element '" + elementName + "'");
   }
 
   /**
@@ -310,46 +310,46 @@ public:
   /**
    * @brief Get a required child with the specified element name.
    *
-   * @param elementName The name of the child element without namespace prefix.
+   * @param name The name of the child element without namespace prefix.
    * @return A reference to the required child.
    * @throws std::runtime_error if the required child is not found.
    */
-  XMLObject& getRequiredChildByName(const ElementName& elementName);
+  XMLObject& getRequiredChildByName(const ElementName& name);
 
   /**
    * @brief Get the optional child with the specified element name.
    *
-   * @param elementName The name of the child element without namespace prefix.
+   * @param name The name of the child element without namespace prefix.
    * @return An optional containing a reference to the optional child if found,
    *         or `std::nullopt` if the optional child is not found.
    */
-  std::optional< std::reference_wrapper<XMLObject> > getOptionalChildByName(const ElementName& elementName);
+  std::optional< std::reference_wrapper<XMLObject> > getOptionalChildByName(const ElementName& name);
 
   /**
    * @brief Get all children with the specified element name.
    *
-   * @param elementName The name of the child elements without namespace prefix.
+   * @param name The name of the child elements without namespace prefix.
    * @return A vector of references to the children with the specified element name.
    */
-  std::vector< std::reference_wrapper<XMLObject> > getChildrenByName(const ElementName& elementName);
+  std::vector< std::reference_wrapper<XMLObject> > getChildrenByName(const ElementName& name);
 
   /**
    * @brief Get a required attribute with the specified attribute name.
    *
-   * @param attributeName The name of the attribute without namespace prefix.
+   * @param name The name of the attribute without namespace prefix.
    * @return A reference to the required attribute.
    * @throws std::runtime_error if the required attribute is not found.
    */
-  Attribute& getRequiredAttributeByName(const AttributeName& attributeName);
+  Attribute& getRequiredAttributeByName(const AttributeName& name);
 
   /**
    * @brief Get an optional attribute with the specified attribute name.
    *
-   * @param attributeName The name of the attribute without namespace prefix.
+   * @param name The name of the attribute without namespace prefix.
    * @return An optional containing a reference to the optional attribute if found,
    *         or `std::nullopt` if the optional attribute is not found.
    */
-  std::optional< std::reference_wrapper<Attribute> > getOptionalAttributeByName(const AttributeName& attributeName);
+  std::optional< std::reference_wrapper<Attribute> > getOptionalAttributeByName(const AttributeName& name);
 
 
 };
