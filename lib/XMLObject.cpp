@@ -162,53 +162,9 @@ XMLObject::XMLObject(const Namespace& xmlns, const ClassName& className, const x
 }
 
 
-XMLObject& XMLObject::getRequiredChildByName(const ElementName& name) {
-  for ( auto& child : children ) {
-    if ( child->elementName == name ) {
-      return *child;
-    }
-  }
-  throw std::runtime_error("Failed to get required child '" + name + "' of element '" + elementName + "'");
-}
-
-std::optional< std::reference_wrapper<XMLObject> > XMLObject::getOptionalChildByName(const ElementName& elementName) {
-  for ( auto& child : children ) {
-    if ( child->elementName == elementName ) {
-      return *child;
-    }
-  }
-  return std::nullopt;
-}
-
-std::vector< std::reference_wrapper<XMLObject> > XMLObject::getChildrenByName(const ElementName& name) {
-  std::vector< std::reference_wrapper<XMLObject> > result;
-  for ( auto& child : children ) {
-    if ( child->elementName == name ) {
-      result.push_back(*child);
-    }
-  }
-  return result;
-}
-
-Attribute& XMLObject::getRequiredAttributeByName(const AttributeName& name) {
-  auto it = std::find_if(attributes.begin(), attributes.end(),
-    [name](Attribute& attribute) { return attribute.name == name; }
-  );
-  if (it != attributes.end()) {
-    return *it;
-  }
-  throw std::runtime_error("Failed to get required attribute '" +  name + "' of element '" + elementName + "'");
-}
-
-std::optional< std::reference_wrapper<Attribute> > XMLObject::getOptionalAttributeByName(const AttributeName& name) {
-  auto it = std::find_if(attributes.begin(), attributes.end(),
-                         [name](Attribute& attribute) { return attribute.name == name; }
-  );
-  if (it != attributes.end()) {
-    return *it;
-  }
-  return std::nullopt;
-}
+// getRequiredChildByName / getOptionalChildByName / getChildrenByName /
+// getRequiredAttributeByName / getOptionalAttributeByName are now defined inline in the
+// header as C++23 deducing-this templates so they are const-correct with the receiver.
 
 std::string XMLObject::stringify() const {
   std::string xmlString = std::string("<") + (!prefix.empty() ? prefix + ":" : "") + elementName;

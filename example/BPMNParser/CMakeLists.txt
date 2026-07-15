@@ -68,8 +68,8 @@ if (DOXYGEN_FOUND AND DOCUMENTATION)
   )
 endif()
 
-# Set the C++ standard
-set(CMAKE_CXX_STANDARD 20)
+# Set the C++ standard (C++23 required for deducing-this accessors in XMLObject.h)
+set(CMAKE_CXX_STANDARD 23)
 
 # Create the object library
 set(LIB "${CMAKE_PROJECT_NAME}")

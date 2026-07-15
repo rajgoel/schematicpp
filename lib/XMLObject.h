@@ -7,6 +7,8 @@
 #include <unordered_map>
 #include <vector>
 #include <optional>
+#include <functional>
+#include <type_traits>
 
 #include <xercesc/dom/DOM.hpp>
 
@@ -85,6 +87,18 @@ template<typename T> XMLObject* createInstance(const Namespace& xmlns, const Cla
 /// @brief Factory used to create instance depending on element name
 typedef std::unordered_map<ElementName, XMLObject* (*)(const Namespace& xmlns, const ClassName& className, const xercesc::DOMElement* element)> Factory;
 
+/**
+ * @brief Yields `const T` when the deduced `Self` is a const-qualified object, otherwise `T`.
+ *
+ * Used together with C++23 explicit object parameters ("deducing this") so that a single
+ * accessor definition returns const-qualified references from a const object and mutable
+ * references from a mutable object. This is needed because child access goes through
+ * `std::unique_ptr<XMLObject>`, which does not propagate the object's const-ness to the
+ * pointee on its own.
+ */
+template<typename Self, typename T>
+using like_const_t = std::conditional_t<std::is_const_v<std::remove_reference_t<Self>>, const T, T>;
+
 
 /**
  * @brief A class representing a node in an XML-tree.
@@ -153,59 +167,33 @@ protected:
 
   inline static Factory factory;
 public:
-  /// @brief Returns a pointer of type T of the object.
-  template<typename T> inline T* is() {
-    return dynamic_cast<T*>(this);
-  }
-
-  template<typename T> inline const T* is() const {
-    return dynamic_cast<const T*>(this);
+  /// @brief Returns a pointer of type T of the object, const-qualified to match the receiver.
+  template<typename T, typename Self> inline auto* is(this Self&& self) {
+    return dynamic_cast<like_const_t<Self, T>*>(&self);
   }
 
   /**
    * @brief Attempt to cast the current instance to the specified type T.
-   * @return  A pointer to the casted object.
+   * @return  A pointer to the casted object, const-qualified to match the receiver.
    * @throws std::runtime_error if the cast fails.
    */
-  template<typename T> inline T* get() {
-    T* ptr = dynamic_cast<T*>(this);
+  template<typename T, typename Self> inline auto* get(this Self&& self) {
+    auto* ptr = self.template is<T>();
     if ( ptr == nullptr ) {
-      throw std::runtime_error("Failed to cast element '" + elementName + "' from class '" + className + "' to type '" + typeid(T).name() + "'");
-    }
-    return ptr;
-  }
-
-  /**
-   * @brief Attempt to cast the current instance to the specified type T.
-   * @return  A pointer to the casted object.
-   * @throws std::runtime_error if the cast fails.
-   */
-  template<typename T> inline const T* get() const {
-    const T* ptr = dynamic_cast<const T*>(this);
-    if ( ptr == nullptr ) {
-      throw std::runtime_error("Failed to cast element '" + elementName + "' from class '" + className + "' to type '" + typeid(T).name() + "'");
+      throw std::runtime_error("Failed to cast element '" + self.elementName + "' from class '" + self.className + "' to type '" + typeid(T).name() + "'");
     }
     return ptr;
   }
 
 private:
+  // T already carries the desired const-ness (baked in by find() below), so this can stay a
+  // single const member: child access via unique_ptr yields a mutable XMLObject& regardless.
   template<typename T>
-  void findRecursive(std::vector<std::reference_wrapper<T> >& result, const Children& descendants)
+  void findRecursive(std::vector<std::reference_wrapper<T> >& result, const Children& descendants) const
   {
     for (auto& descendant : descendants) {
-      if (descendant->is<T>()) {
-        result.push_back(*descendant->get<T>());
-      }
-      findRecursive(result, descendant->children );
-    }
-  }
-
-  template<typename T>
-  void findRecursive(std::vector<std::reference_wrapper<const T> >& result, const Children& descendants) const
-  {
-    for (auto& descendant : descendants) {
-      if (descendant->is<const T>()) {
-        result.push_back(*descendant->get<const T>());
+      if (auto* ptr = descendant->template is<T>()) {
+        result.push_back(*ptr);
       }
       findRecursive(result, descendant->children );
     }
@@ -215,26 +203,14 @@ public:
   /**
    * @brief Find all descendants of type T.
    *
-   * @return A vector of references to descendants of type T.
+   * @return A vector of references to descendants of type T,
+   *         const-qualified to match the receiver.
    */
-  template<typename T>
-  std::vector<std::reference_wrapper<T> > find()
+  template<typename T, typename Self>
+  auto find(this Self&& self)
   {
-    std::vector<std::reference_wrapper<T> > result;
-    findRecursive(result, children);
-    return result;
-  }
-
-  /**
-   * @brief Find all descendants of type T.
-   *
-   * @return A vector of const references to descendants of type T.
-   */
-  template<typename T>
-  std::vector<std::reference_wrapper<const T> > find() const
-  {
-    std::vector<std::reference_wrapper<const T> > result;
-    findRecursive(result, children);
+    std::vector<std::reference_wrapper<like_const_t<Self, T> > > result;
+    self.findRecursive(result, self.children);
     return result;
   }
 
@@ -265,43 +241,46 @@ public:
   /**
    * @brief Get a required child of type T.
    *
-   * @return A reference to the required child.
+   * @return A reference to the required child, const-qualified to match the receiver.
    * @throws std::runtime_error if the required child is not found.
    */
-  template<typename T> T& getRequiredChild() {
-    for ( auto& child : children ) {
-      if ( child->is<T>() ) {
-        return *child->get<T>();
+  template<typename T, typename Self> auto& getRequiredChild(this Self&& self) {
+    for ( auto& child : self.children ) {
+      if ( auto* ptr = child->template is<like_const_t<Self, T> >() ) {
+        return *ptr;
       }
     }
-    throw std::runtime_error("Failed to find required child of type '" + std::string(typeid(T).name()) + "' in element '" + elementName + "'");
+    throw std::runtime_error("Failed to find required child of type '" + std::string(typeid(T).name()) + "' in element '" + self.elementName + "'");
   }
 
   /**
    * @brief Get an optional child of type T.
    *
-   * @return An optional containing a reference to the optional child if found,
-   *         or `std::nullopt` if the optional child is not found.
+   * @return An optional reference to the optional child (const-qualified to match the
+   *         receiver) if found, or `std::nullopt` if the optional child is not found.
    */
-  template<typename T> std::optional< std::reference_wrapper<T> > getOptionalChild() {
-    for ( auto& child : children ) {
-      if ( child->is<T>() ) {
-        return *child->get<T>();
+  template<typename T, typename Self> auto getOptionalChild(this Self&& self) {
+    using E = like_const_t<Self, T>;
+    for ( auto& child : self.children ) {
+      if ( auto* ptr = child->template is<E>() ) {
+        return std::optional< std::reference_wrapper<E> >(*ptr);
       }
     }
-    return std::nullopt;
+    return std::optional< std::reference_wrapper<E> >(std::nullopt);
   }
 
   /**
    * @brief Get all children of type T.
    *
-   * @return A vector of references to the children of type T.
+   * @return A vector of references to the children of type T,
+   *         const-qualified to match the receiver.
    */
-  template<typename T> std::vector< std::reference_wrapper<T> > getChildren() {
-    std::vector< std::reference_wrapper<T> > result;
-    for ( auto& child : children ) {
-      if ( child->is<T>() ) {
-        result.push_back(*child->get<T>());
+  template<typename T, typename Self> auto getChildren(this Self&& self) {
+    using E = like_const_t<Self, T>;
+    std::vector< std::reference_wrapper<E> > result;
+    for ( auto& child : self.children ) {
+      if ( auto* ptr = child->template is<E>() ) {
+        result.push_back(*ptr);
       }
     }
     return result;
@@ -311,45 +290,85 @@ public:
    * @brief Get a required child with the specified element name.
    *
    * @param name The name of the child element without namespace prefix.
-   * @return A reference to the required child.
+   * @return A reference to the required child, const-qualified to match the receiver.
    * @throws std::runtime_error if the required child is not found.
    */
-  XMLObject& getRequiredChildByName(const ElementName& name);
+  template<typename Self> auto& getRequiredChildByName(this Self&& self, const ElementName& name) {
+    for ( auto& child : self.children ) {
+      if ( child->elementName == name ) {
+        return static_cast<like_const_t<Self, XMLObject>&>(*child);
+      }
+    }
+    throw std::runtime_error("Failed to get required child '" + name + "' of element '" + self.elementName + "'");
+  }
 
   /**
    * @brief Get the optional child with the specified element name.
    *
    * @param name The name of the child element without namespace prefix.
-   * @return An optional containing a reference to the optional child if found,
-   *         or `std::nullopt` if the optional child is not found.
+   * @return An optional reference to the optional child (const-qualified to match the
+   *         receiver) if found, or `std::nullopt` if the optional child is not found.
    */
-  std::optional< std::reference_wrapper<XMLObject> > getOptionalChildByName(const ElementName& name);
+  template<typename Self> auto getOptionalChildByName(this Self&& self, const ElementName& name) {
+    using O = like_const_t<Self, XMLObject>;
+    for ( auto& child : self.children ) {
+      if ( child->elementName == name ) {
+        return std::optional< std::reference_wrapper<O> >(static_cast<O&>(*child));
+      }
+    }
+    return std::optional< std::reference_wrapper<O> >(std::nullopt);
+  }
 
   /**
    * @brief Get all children with the specified element name.
    *
    * @param name The name of the child elements without namespace prefix.
-   * @return A vector of references to the children with the specified element name.
+   * @return A vector of references to the children with the specified element name,
+   *         const-qualified to match the receiver.
    */
-  std::vector< std::reference_wrapper<XMLObject> > getChildrenByName(const ElementName& name);
+  template<typename Self> auto getChildrenByName(this Self&& self, const ElementName& name) {
+    using O = like_const_t<Self, XMLObject>;
+    std::vector< std::reference_wrapper<O> > result;
+    for ( auto& child : self.children ) {
+      if ( child->elementName == name ) {
+        result.push_back(static_cast<O&>(*child));
+      }
+    }
+    return result;
+  }
 
   /**
    * @brief Get a required attribute with the specified attribute name.
    *
    * @param name The name of the attribute without namespace prefix.
-   * @return A reference to the required attribute.
+   * @return A reference to the required attribute, const-qualified to match the receiver.
    * @throws std::runtime_error if the required attribute is not found.
    */
-  Attribute& getRequiredAttributeByName(const AttributeName& name);
+  template<typename Self> auto& getRequiredAttributeByName(this Self&& self, const AttributeName& name) {
+    for ( auto& attribute : self.attributes ) {
+      if ( attribute.name == name ) {
+        return attribute;
+      }
+    }
+    throw std::runtime_error("Failed to get required attribute '" + name + "' of element '" + self.elementName + "'");
+  }
 
   /**
    * @brief Get an optional attribute with the specified attribute name.
    *
    * @param name The name of the attribute without namespace prefix.
-   * @return An optional containing a reference to the optional attribute if found,
-   *         or `std::nullopt` if the optional attribute is not found.
+   * @return An optional reference to the optional attribute (const-qualified to match the
+   *         receiver) if found, or `std::nullopt` if the optional attribute is not found.
    */
-  std::optional< std::reference_wrapper<Attribute> > getOptionalAttributeByName(const AttributeName& name);
+  template<typename Self> auto getOptionalAttributeByName(this Self&& self, const AttributeName& name) {
+    using A = like_const_t<Self, Attribute>;
+    for ( auto& attribute : self.attributes ) {
+      if ( attribute.name == name ) {
+        return std::optional< std::reference_wrapper<A> >(attribute);
+      }
+    }
+    return std::optional< std::reference_wrapper<A> >(std::nullopt);
+  }
 
 
 };

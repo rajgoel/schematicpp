@@ -26,12 +26,12 @@ int main(int argc, char **argv) {
     optional< reference_wrapper<Attribute> > processId = process.id;
     cout << "- Process";
     if ( processId.has_value() ) {
-      cout << " with id '" << (string)processId->get() << "'";
+      cout << " with id '" << (string)processId->get().value << "'";
     }
     else {
       cout << " without id";
     }
-    if ( process.isExecutable.has_value() && process.isExecutable->get() ) {
+    if ( process.isExecutable.has_value() && process.isExecutable->get().value ) {
       cout << " is executable and"; 
     }
     auto flowNodes = process.getChildren<tFlowNode>();
@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
       optional< reference_wrapper<Attribute> > nodeId = node.id;
       cout << "  - " << node.className;
       if ( nodeId.has_value() ) {
-        cout << " with id '" << (string)nodeId->get() << "'";
+        cout << " with id '" << (string)nodeId->get().value << "'";
       }
       else {
         cout << " without id";
