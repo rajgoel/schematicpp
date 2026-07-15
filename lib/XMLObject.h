@@ -180,7 +180,7 @@ public:
   template<typename T, typename Self> inline auto* get(this Self&& self) {
     auto* ptr = self.template is<T>();
     if ( ptr == nullptr ) {
-      throw std::runtime_error("Failed to cast element '" + self.elementName + "' from class '" + self.className + "' to type '" + typeid(T).name() + "'");
+      throw std::runtime_error("Failed to cast element '" + self.XMLObject::elementName + "' from class '" + self.XMLObject::className + "' to type '" + typeid(T).name() + "'");
     }
     return ptr;
   }
@@ -210,7 +210,7 @@ public:
   auto find(this Self&& self)
   {
     std::vector<std::reference_wrapper<like_const_t<Self, T> > > result;
-    self.findRecursive(result, self.children);
+    self.findRecursive(result, self.XMLObject::children);
     return result;
   }
 
@@ -245,12 +245,12 @@ public:
    * @throws std::runtime_error if the required child is not found.
    */
   template<typename T, typename Self> auto& getRequiredChild(this Self&& self) {
-    for ( auto& child : self.children ) {
+    for ( auto& child : self.XMLObject::children ) {
       if ( auto* ptr = child->template is<like_const_t<Self, T> >() ) {
         return *ptr;
       }
     }
-    throw std::runtime_error("Failed to find required child of type '" + std::string(typeid(T).name()) + "' in element '" + self.elementName + "'");
+    throw std::runtime_error("Failed to find required child of type '" + std::string(typeid(T).name()) + "' in element '" + self.XMLObject::elementName + "'");
   }
 
   /**
@@ -261,7 +261,7 @@ public:
    */
   template<typename T, typename Self> auto getOptionalChild(this Self&& self) {
     using E = like_const_t<Self, T>;
-    for ( auto& child : self.children ) {
+    for ( auto& child : self.XMLObject::children ) {
       if ( auto* ptr = child->template is<E>() ) {
         return std::optional< std::reference_wrapper<E> >(*ptr);
       }
@@ -278,7 +278,7 @@ public:
   template<typename T, typename Self> auto getChildren(this Self&& self) {
     using E = like_const_t<Self, T>;
     std::vector< std::reference_wrapper<E> > result;
-    for ( auto& child : self.children ) {
+    for ( auto& child : self.XMLObject::children ) {
       if ( auto* ptr = child->template is<E>() ) {
         result.push_back(*ptr);
       }
@@ -294,12 +294,12 @@ public:
    * @throws std::runtime_error if the required child is not found.
    */
   template<typename Self> auto& getRequiredChildByName(this Self&& self, const ElementName& name) {
-    for ( auto& child : self.children ) {
+    for ( auto& child : self.XMLObject::children ) {
       if ( child->elementName == name ) {
         return static_cast<like_const_t<Self, XMLObject>&>(*child);
       }
     }
-    throw std::runtime_error("Failed to get required child '" + name + "' of element '" + self.elementName + "'");
+    throw std::runtime_error("Failed to get required child '" + name + "' of element '" + self.XMLObject::elementName + "'");
   }
 
   /**
@@ -311,7 +311,7 @@ public:
    */
   template<typename Self> auto getOptionalChildByName(this Self&& self, const ElementName& name) {
     using O = like_const_t<Self, XMLObject>;
-    for ( auto& child : self.children ) {
+    for ( auto& child : self.XMLObject::children ) {
       if ( child->elementName == name ) {
         return std::optional< std::reference_wrapper<O> >(static_cast<O&>(*child));
       }
@@ -329,7 +329,7 @@ public:
   template<typename Self> auto getChildrenByName(this Self&& self, const ElementName& name) {
     using O = like_const_t<Self, XMLObject>;
     std::vector< std::reference_wrapper<O> > result;
-    for ( auto& child : self.children ) {
+    for ( auto& child : self.XMLObject::children ) {
       if ( child->elementName == name ) {
         result.push_back(static_cast<O&>(*child));
       }
@@ -345,12 +345,12 @@ public:
    * @throws std::runtime_error if the required attribute is not found.
    */
   template<typename Self> auto& getRequiredAttributeByName(this Self&& self, const AttributeName& name) {
-    for ( auto& attribute : self.attributes ) {
+    for ( auto& attribute : self.XMLObject::attributes ) {
       if ( attribute.name == name ) {
         return attribute;
       }
     }
-    throw std::runtime_error("Failed to get required attribute '" + name + "' of element '" + self.elementName + "'");
+    throw std::runtime_error("Failed to get required attribute '" + name + "' of element '" + self.XMLObject::elementName + "'");
   }
 
   /**
@@ -362,7 +362,7 @@ public:
    */
   template<typename Self> auto getOptionalAttributeByName(this Self&& self, const AttributeName& name) {
     using A = like_const_t<Self, Attribute>;
-    for ( auto& attribute : self.attributes ) {
+    for ( auto& attribute : self.XMLObject::attributes ) {
       if ( attribute.name == name ) {
         return std::optional< std::reference_wrapper<A> >(attribute);
       }
