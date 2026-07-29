@@ -62,6 +62,7 @@ GENERATE_BUILTIN_ALIAS(TimeClass, StringClass, "time")
 GENERATE_BUILTIN_ALIAS(DateClass, StringClass, "date")
 GENERATE_BUILTIN_ALIAS(DateTimeClass, StringClass, "dateTime")
 GENERATE_BUILTIN_ALIAS(QualifiedNameClass, StringClass, "QName")
+GENERATE_BUILTIN_ALIAS(NCNameClass, StringClass, "NCName")
 GENERATE_BUILTIN_ALIAS(IdClass, StringClass, "ID")
 GENERATE_BUILTIN_ALIAS(IdRefClass, StringClass, "IDREF")
 

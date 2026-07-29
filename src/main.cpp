@@ -476,8 +476,10 @@ static void resolveMemberRefs(map<FullName, Class*>& classMap) {
 
             if (classIt == classes.end()) {
                 if (it2->minOccurs > 0) {
-cerr << it->second->name.first << " " << it->second->name.second << " - " << it2->type.second << endl;
-                    cerr << "Undefined type '" + it2->type.first + ":" + it2->type.second + "' in required member '" + it2->name + "' of '" + it->first.first + ":" + it->first.second + "'" << endl;
+                    // A required member of an unknown type cannot be generated. Dropping it would leave the
+                    // generated class silently missing a member the schema requires, so that the schema
+                    // error surfaces only as a compilation error in whatever consumes the generated code.
+                    throw runtime_error("Undefined type '" + it2->type.first + ":" + it2->type.second + "' in required member '" + it2->name + "' of '" + it->first.first + ":" + it->first.second + "'");
                 }
                 //allow members with undefined types as long as they're optional or vectors
                 if (verbose) {
@@ -753,6 +755,7 @@ int main_wrapper(int argc, char** argv) {
         addClass(new DateTimeClass);
         addClass(new BooleanClass);
         addClass(new QualifiedNameClass);
+        addClass(new NCNameClass);
         addClass(new IdClass);
         addClass(new IdRefClass);
 
