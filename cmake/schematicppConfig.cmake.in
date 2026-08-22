@@ -1,0 +1,8 @@
+@PACKAGE_INIT@
+
+# schematic++ is a build-time code generator. A consumer imports the executable and runs it; it links
+# nothing, so no dependency of schematic++ needs resolving here.
+
+include("${CMAKE_CURRENT_LIST_DIR}/schematicpp-targets.cmake")
+
+check_required_components(schematicpp)
