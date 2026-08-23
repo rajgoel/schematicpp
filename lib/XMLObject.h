@@ -174,6 +174,7 @@ public:
 
   /**
    * @brief Attempt to cast the current instance to the specified type T.
+   * @param self The object the call is made on; its const-ness determines that of the result.
    * @return  A pointer to the casted object, const-qualified to match the receiver.
    * @throws std::runtime_error if the cast fails.
    */
@@ -241,6 +242,7 @@ public:
   /**
    * @brief Get a required child of type T.
    *
+   * @param self The object the call is made on; its const-ness determines that of the result.
    * @return A reference to the required child, const-qualified to match the receiver.
    * @throws std::runtime_error if the required child is not found.
    */
@@ -256,6 +258,7 @@ public:
   /**
    * @brief Get an optional child of type T.
    *
+   * @param self The object the call is made on; its const-ness determines that of the result.
    * @return An optional reference to the optional child (const-qualified to match the
    *         receiver) if found, or `std::nullopt` if the optional child is not found.
    */
@@ -272,6 +275,7 @@ public:
   /**
    * @brief Get all children of type T.
    *
+   * @param self The object the call is made on; its const-ness determines that of the result.
    * @return A vector of references to the children of type T,
    *         const-qualified to match the receiver.
    */
@@ -289,6 +293,7 @@ public:
   /**
    * @brief Get a required child with the specified element name.
    *
+   * @param self The object the call is made on; its const-ness determines that of the result.
    * @param name The name of the child element without namespace prefix.
    * @return A reference to the required child, const-qualified to match the receiver.
    * @throws std::runtime_error if the required child is not found.
@@ -305,6 +310,7 @@ public:
   /**
    * @brief Get the optional child with the specified element name.
    *
+   * @param self The object the call is made on; its const-ness determines that of the result.
    * @param name The name of the child element without namespace prefix.
    * @return An optional reference to the optional child (const-qualified to match the
    *         receiver) if found, or `std::nullopt` if the optional child is not found.
@@ -322,6 +328,7 @@ public:
   /**
    * @brief Get all children with the specified element name.
    *
+   * @param self The object the call is made on; its const-ness determines that of the result.
    * @param name The name of the child elements without namespace prefix.
    * @return A vector of references to the children with the specified element name,
    *         const-qualified to match the receiver.
@@ -340,6 +347,7 @@ public:
   /**
    * @brief Get a required attribute with the specified attribute name.
    *
+   * @param self The object the call is made on; its const-ness determines that of the result.
    * @param name The name of the attribute without namespace prefix.
    * @return A reference to the required attribute, const-qualified to match the receiver.
    * @throws std::runtime_error if the required attribute is not found.
@@ -356,6 +364,7 @@ public:
   /**
    * @brief Get an optional attribute with the specified attribute name.
    *
+   * @param self The object the call is made on; its const-ness determines that of the result.
    * @param name The name of the attribute without namespace prefix.
    * @return An optional reference to the optional attribute (const-qualified to match the
    *         receiver) if found, or `std::nullopt` if the optional attribute is not found.
