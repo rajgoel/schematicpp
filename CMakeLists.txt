@@ -18,7 +18,15 @@
 cmake_minimum_required(VERSION 3.26.4)
 project(schematic++ VERSION 0.8.0 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 23)
+
+# Only when schematic++ is built on its own, so that a consumer's choice always wins.
+if(PROJECT_IS_TOP_LEVEL)
+  if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+  endif()
+  set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+endif()
 
 # Xerces-C is declared rather than resolved from the system, so that a build succeeds on a machine with
 # nothing installed. An installed copy satisfying the requirement is used and nothing is built; otherwise
@@ -85,13 +93,13 @@ install(TARGETS schematic++
 install(EXPORT schematicpp-targets
   FILE      schematicpp-targets.cmake
   NAMESPACE schematicpp::
-  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/schematicpp
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/cmake/schematicpp
 )
 
 configure_package_config_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake/schematicppConfig.cmake.in
   ${CMAKE_CURRENT_BINARY_DIR}/schematicppConfig.cmake
-  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/schematicpp
+  INSTALL_DESTINATION ${CMAKE_INSTALL_DATADIR}/cmake/schematicpp
 )
 
 # schematic++ is at 0.8.0, below 1.0.0, so compatibility is SameMinorVersion: a consumer requiring 0.8.0
@@ -105,6 +113,6 @@ write_basic_package_version_file(
 install(FILES
   ${CMAKE_CURRENT_BINARY_DIR}/schematicppConfig.cmake
   ${CMAKE_CURRENT_BINARY_DIR}/schematicppConfigVersion.cmake
-  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/schematicpp
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/cmake/schematicpp
 )
 

@@ -6,29 +6,64 @@ Forked from [https://github.com/Tjoppen/james](https://github.com/Tjoppen/james/
 ## Purpose/goals
 The purpose of this program is to transform a subset of XML schema defintions into C++ code for marshalling and unmarshalling documents conforming to one or more schemas. The generated code should not be needlessly complicated (no getters or setters). The number of dependencies should be kept to a minimum.
 
-## Dependencies
+## Requirements
 
-schematic++ requires Xerces-C++ 3.2.x. On Ubuntu Linux Xerces can be installed by
+A C++23 compiler, CMake 3.26.4 or later, and git.
+
+Xerces-C++ 3.2.x is fetched automatically unless installed already.
+
+## Build
+
+To build schematic++, run
+
 ```sh
-sudo apt install libxerces-c-dev
+mkdir build
+cd build
+cmake ..
+make -j$(nproc)
 ```
 
-## Build the program
+This creates the executable `schematic++` in the project folder.
 
-The program is built like a typical CMake project. A normal build will look something like this (output omitted):
+The build type defaults to `Release`.
+
+## Install
+
+After building, run
 
 ```sh
- ~/schematicpp$ mkdir build
- ~/schematicpp$ cd build
- ~/schematicpp/build$ cmake ..
- ~/schematicpp/build$ make
- ```
+sudo make install
+```
+to install schematic++ into `/usr/local`, or
 
-## Install the program
-After building the program, it can be installed by
+```sh
+cmake --install <build> --prefix <target>
+```
+to copy
 
 ```
-~/schematicpp/build$ sudo make install
+bin/schematic++
+share/cmake/schematicpp/
+```
+to the `<target>` folder.
+
+A CMake project can then use the program with
+
+```cmake
+find_package(schematicpp REQUIRED)
+add_custom_command(... COMMAND schematicpp::schematic++ -n <namespace> -o <dir> -i <schema> ...)
+```
+
+Nothing further is needed when schematic++ was installed into `/usr/local`. For any other folder, add
+`cmake .. -DCMAKE_PREFIX_PATH=<target>`.
+
+### Uninstall
+
+Remove the installed files, where `<target>` is `/usr/local` or the folder given when installing.
+
+```sh
+rm <target>/bin/schematic++
+rm -rf <target>/share/cmake/schematicpp
 ```
 
 ## A short guide to usage
@@ -94,6 +129,7 @@ You can build a library by
 ```sh
 cd BPMNParser
 mkdir build
+cd build
 cmake ..
 make
 ```
@@ -105,6 +141,7 @@ You can also build an executable using the library by
 ```sh
 cd BPMNParser
 mkdir build
+cd build
 cmake -DMAIN=main.cpp -DEXE=bpmnParser ..
 make
 ```
@@ -118,7 +155,7 @@ Once the library is built, you can manually create an executable by
 cd BPMNParser
 g++ -std=c++23 main.cpp XMLObject.cpp bpmn/*.cpp  -L./lib  -lBPMNParser  -lxerces-c -o bpmnParser
 ```
-### Runing the executable
+### Running the executable
 
 You can run the executable by
 ```sh
